@@ -29,11 +29,27 @@
  * baseline, and every option in it is off.
  *
  * The platform parses `name` and `message`, and nothing else, so extra answers
- * go into those two: the split name is rejoined as "First Last", and the
- * service and address are written as labelled lines at the top of `message`,
- * in a fixed order, with a blank line before whatever the visitor typed. No
- * new payload key is ever introduced, because the endpoint would ignore it and
- * the lead would silently lose that information.
+ * go into those two: the split name is rejoined as "First Last", and everything
+ * else is written as labelled lines at the top of `message`, then a blank line,
+ * then whatever the visitor typed. No new payload key is ever introduced,
+ * because the endpoint would ignore it and the lead would silently lose that
+ * information.
+ *
+ * THE LABELLED LINES ALWAYS APPEAR IN THIS ORDER, whichever options are on:
+ *
+ *     Service:
+ *     Address:
+ *     ZIP:
+ *     Timeframe:
+ *
+ * Fixed on purpose. These land in an owner's email and in the platform's lead
+ * list, and a human skimming them should find the same fact in the same place
+ * on every lead from every site. A line is omitted entirely when its option is
+ * off or its answer is blank; the surviving lines keep this relative order.
+ *
+ * ZIP has two homes. With `address` on it belongs to the address and is written
+ * into the Address line, because that is how an address is written. With
+ * `address` off it stands alone as its own ZIP line.
  */
 
 import { useState, type FormEvent } from 'react'
@@ -45,10 +61,14 @@ type Status = 'idle' | 'sending' | 'done' | 'error'
 const DEFAULTS = {
   splitName: false,
   address: 'off' as const,
-  zip: false,
+  zip: 'off' as const,
   serviceDropdown: false,
   emailRequired: false,
+  timeframe: undefined as { label: string; options: string[]; required?: boolean } | undefined,
 }
+
+/** US ZIP, five digits, optionally +4. */
+const ZIP_PATTERN = /^\d{5}(-\d{4})?$/
 
 const NOT_SURE = 'Not sure yet'
 
@@ -56,14 +76,25 @@ export default function ContactForm() {
   const [status, setStatus] = useState<Status>('idle')
   const [smsConsent, setSmsConsent] = useState(false)
   const [validation, setValidation] = useState('')
+  /**
+   * Which field the inline message is about. Drives aria-invalid and
+   * aria-describedby on that input, so a screen reader announces the message as
+   * belonging to the field rather than as loose text at the bottom of the form.
+   */
+  const [invalidField, setInvalidField] = useState('')
 
   const opts = { ...DEFAULTS, ...(config.contactForm ?? {}) }
   const wantsAddress = opts.address !== 'off'
   const addressRequired = opts.address === 'required'
+  const wantsZip = opts.zip !== 'off'
+  const zipRequired = opts.zip === 'required'
+  const timeframe = opts.timeframe
+  const timeframeRequired = timeframe?.required === true
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setValidation('')
+    setInvalidField('')
     const form = event.currentTarget
     const data = new FormData(form)
     const read = (key: string) => String(data.get(key) ?? '').trim()
@@ -79,46 +110,77 @@ export default function ContactForm() {
     const street = read('addressStreet')
     const city = read('addressCity')
     const zip = read('addressZip')
+    const timeframeAnswer = read('timeframe')
     const honeypot = String(data.get(HONEYPOT_FIELD) ?? '')
 
     if (opts.splitName && !first) {
       setValidation('Please enter your first name.')
+      setInvalidField('firstName')
       return
     }
     if (opts.splitName && !last) {
       setValidation('Please enter your last name.')
+      setInvalidField('lastName')
       return
     }
     if (!name) {
       setValidation('Please enter your name.')
+      setInvalidField('name')
       return
     }
     if (!phone) {
       setValidation('Please enter a phone number so we can reach you.')
+      setInvalidField('phone')
       return
     }
     if (opts.emailRequired && !email) {
       setValidation('Please enter an email address.')
+      setInvalidField('email')
       return
     }
     if (addressRequired && !street) {
       setValidation('Please enter the street address where the work is needed.')
+      setInvalidField('addressStreet')
       return
     }
     if (addressRequired && !city) {
       setValidation('Please enter the city where the work is needed.')
+      setInvalidField('addressCity')
+      return
+    }
+    if (zipRequired && !zip) {
+      setValidation('Please enter your ZIP code.')
+      setInvalidField('addressZip')
+      return
+    }
+    // Checked whenever one was typed, required or not: a malformed ZIP is
+    // worse than none, because it looks like an answer.
+    if (zip && !ZIP_PATTERN.test(zip)) {
+      setValidation('Please enter a 5 digit ZIP code, for example 92801.')
+      setInvalidField('addressZip')
+      return
+    }
+    if (timeframeRequired && !timeframeAnswer) {
+      // No quotes or trailing period: the label is usually already a question,
+      // and "installed?"." reads as a typo.
+      setValidation(`Please choose an option for: ${timeframe?.label ?? 'timeframe'}`)
+      setInvalidField('timeframe')
       return
     }
 
-    // Labelled lines first, always in this order, then a blank line, then the
-    // visitor's own words. With no extra fields on, `message` is exactly what
-    // they typed, byte for byte.
+    // Service, Address, ZIP, Timeframe, then a blank line, then the visitor's
+    // own words. The order is fixed; see the note at the top of this file. With
+    // no extra fields on, `message` is exactly what they typed, byte for byte.
     const labelled: string[] = []
     if (opts.serviceDropdown && service) labelled.push(`Service: ${service}`)
     if (wantsAddress && (street || city)) {
+      // With an address, the ZIP belongs on the address line.
       const line = [street, [city, zip].filter(Boolean).join(' ')].filter(Boolean).join(', ')
       labelled.push(`Address: ${line}`)
     }
+    // Only stands alone when there is no address line to carry it.
+    if (wantsZip && zip && !wantsAddress) labelled.push(`ZIP: ${zip}`)
+    if (timeframe && timeframeAnswer) labelled.push(`Timeframe: ${timeframeAnswer}`)
     const message = labelled.length > 0 ? `${labelled.join('\n')}\n\n${typed}` : typed
 
     setStatus('sending')
@@ -160,6 +222,10 @@ export default function ContactForm() {
   const field =
     'mt-1 w-full rounded-[var(--radius)] border border-line bg-surface px-3 py-2 text-base text-ink focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary-soft'
 
+  /** Ties the one inline message to the field it is about. */
+  const invalidProps = (name: string) =>
+    invalidField === name ? { 'aria-invalid': true as const, 'aria-describedby': 'contact-validation' } : {}
+
   return (
     <form
       onSubmit={handleSubmit}
@@ -179,13 +245,13 @@ export default function ContactForm() {
               <label htmlFor="contact-first-name" className="text-sm font-semibold text-ink">
                 First name
               </label>
-              <input id="contact-first-name" name="firstName" type="text" required autoComplete="given-name" className={field} />
+              <input id="contact-first-name" name="firstName" type="text" required autoComplete="given-name" className={field} {...invalidProps('firstName')} />
             </div>
             <div>
               <label htmlFor="contact-last-name" className="text-sm font-semibold text-ink">
                 Last name
               </label>
-              <input id="contact-last-name" name="lastName" type="text" required autoComplete="family-name" className={field} />
+              <input id="contact-last-name" name="lastName" type="text" required autoComplete="family-name" className={field} {...invalidProps('lastName')} />
             </div>
           </>
         ) : (
@@ -193,14 +259,14 @@ export default function ContactForm() {
             <label htmlFor="contact-name" className="text-sm font-semibold text-ink">
               Name
             </label>
-            <input id="contact-name" name="name" type="text" required autoComplete="name" className={field} />
+            <input id="contact-name" name="name" type="text" required autoComplete="name" className={field} {...invalidProps('name')} />
           </div>
         )}
         <div>
           <label htmlFor="contact-phone" className="text-sm font-semibold text-ink">
             Phone
           </label>
-          <input id="contact-phone" name="phone" type="tel" required autoComplete="tel" className={field} />
+          <input id="contact-phone" name="phone" type="tel" required autoComplete="tel" className={field} {...invalidProps('phone')} />
         </div>
         <div className="sm:col-span-2">
           <label htmlFor="contact-email" className="text-sm font-semibold text-ink">
@@ -213,6 +279,7 @@ export default function ContactForm() {
             required={opts.emailRequired}
             autoComplete="email"
             className={field}
+            {...invalidProps('email')}
           />
         </div>
 
@@ -246,9 +313,10 @@ export default function ContactForm() {
                 required={addressRequired}
                 autoComplete="address-line1"
                 className={field}
+                {...invalidProps('addressStreet')}
               />
             </div>
-            <div className={opts.zip ? '' : 'sm:col-span-2'}>
+            <div className={wantsZip ? '' : 'sm:col-span-2'}>
               <label htmlFor="contact-address-city" className="text-sm font-semibold text-ink">
                 City {!addressRequired && <span className="font-normal text-muted">(optional)</span>}
               </label>
@@ -259,24 +327,75 @@ export default function ContactForm() {
                 required={addressRequired}
                 autoComplete="address-level2"
                 className={field}
+                {...invalidProps('addressCity')}
               />
             </div>
-            {opts.zip && (
+            {wantsZip && (
               <div>
                 <label htmlFor="contact-address-zip" className="text-sm font-semibold text-ink">
-                  ZIP <span className="font-normal text-muted">(optional)</span>
+                  ZIP {!zipRequired && <span className="font-normal text-muted">(optional)</span>}
                 </label>
                 <input
                   id="contact-address-zip"
                   name="addressZip"
                   type="text"
+                  required={zipRequired}
                   inputMode="numeric"
                   autoComplete="postal-code"
+                  maxLength={10}
+                  placeholder="62701"
                   className={field}
+                  {...invalidProps('addressZip')}
                 />
               </div>
             )}
           </>
+        )}
+
+        {/* Standalone ZIP: only when there is no address group to sit in. */}
+        {wantsZip && !wantsAddress && (
+          <div className="sm:col-span-2">
+            <label htmlFor="contact-address-zip" className="text-sm font-semibold text-ink">
+              ZIP code {!zipRequired && <span className="font-normal text-muted">(optional)</span>}
+            </label>
+            <input
+              id="contact-address-zip"
+              name="addressZip"
+              type="text"
+              required={zipRequired}
+              inputMode="numeric"
+              autoComplete="postal-code"
+              maxLength={10}
+              placeholder="92801"
+              className={field}
+              {...invalidProps('addressZip')}
+            />
+          </div>
+        )}
+
+        {timeframe && (
+          <div className="sm:col-span-2">
+            <label htmlFor="contact-timeframe" className="text-sm font-semibold text-ink">
+              {timeframe.label} {!timeframeRequired && <span className="font-normal text-muted">(optional)</span>}
+            </label>
+            {/* Empty first option, so a required timeframe cannot be satisfied
+                by leaving the select alone. */}
+            <select
+              id="contact-timeframe"
+              name="timeframe"
+              defaultValue=""
+              required={timeframeRequired}
+              className={field}
+              {...invalidProps('timeframe')}
+            >
+              <option value="">Choose one</option>
+              {timeframe.options.map((o) => (
+                <option key={o} value={o}>
+                  {o}
+                </option>
+              ))}
+            </select>
+          </div>
         )}
 
         <div className="sm:col-span-2">
@@ -301,7 +420,7 @@ export default function ContactForm() {
       </label>
 
       {validation && (
-        <p className="mt-4 text-sm font-semibold text-accent-dark" role="alert">
+        <p id="contact-validation" className="mt-4 text-sm font-semibold text-accent-dark" role="alert">
           {validation}
         </p>
       )}

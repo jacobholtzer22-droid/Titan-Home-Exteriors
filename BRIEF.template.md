@@ -52,6 +52,23 @@ One block per service. Three to six real customer questions per service; if you 
 
 (add more services as needed)
 
+## Contact form
+
+The form asks for name, phone, email and a message by default. Anything here is
+optional and off unless you say so. Extra answers are folded into the message
+the owner receives, so nothing is lost and no platform change is needed.
+
+- Ask for first and last name separately? (yes / no)
+- Ask for the property address? (no / optional / required)
+- Ask for a ZIP code? (no / optional / required). Independent of the address: a
+  business that quotes from local data wants the ZIP and not the street.
+- Show a dropdown of the services above? (yes / no)
+- Require the email address? (yes / no)
+- Ask how soon they need the work? (no, or give the question and the choices)
+  - Question as the client would say it:
+  - Choices (two or more):
+  - Required? (yes / no)
+
 ## Service areas
 
 - Primary city and state:

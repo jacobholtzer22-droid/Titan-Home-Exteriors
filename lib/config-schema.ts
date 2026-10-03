@@ -193,8 +193,32 @@ export const siteConfigSchema = z
          * Trades that quote on site need the address; a consultant does not.
          */
         address: z.enum(['off', 'optional', 'required']).default('off'),
-        /** Also ask for a ZIP. Never required on its own, even when address is. */
-        zip: z.boolean().default(false),
+        /**
+         * Ask for a ZIP or postal code. Independent of `address`.
+         *
+         * With `address` on, the ZIP sits in the address group and folds into
+         * the Address line, which is how a street address is normally written.
+         * With `address` off, it renders on its own and folds in as its own
+         * "ZIP:" line. A business that quotes from local data needs the ZIP and
+         * has no use for the street.
+         */
+        zip: z.enum(['off', 'optional', 'required']).default('off'),
+        /**
+         * A "how soon do you need this" dropdown.
+         *
+         * The label and the choices are per-client because the useful answers
+         * are: a water treatment company cares about install timing, a roofer
+         * about whether it is leaking now. An empty first choice means the
+         * select has no default, so a required timeframe cannot be satisfied by
+         * the visitor ignoring it.
+         */
+        timeframe: z
+          .object({
+            label: z.string().min(4),
+            options: z.array(z.string().min(1)).min(2),
+            required: z.boolean().default(false),
+          })
+          .optional(),
         /**
          * A dropdown of config.services by name, plus "Not sure yet" so nobody
          * is forced to self-diagnose before they can send a message.

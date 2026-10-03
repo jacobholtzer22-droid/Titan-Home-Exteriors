@@ -18,6 +18,17 @@ Fill `site.config.ts` entirely from `BRIEF.md`.
 * Service slugs are kebab-case from the service name. Area slugs are kebab-case from the city name.
 * For each service, write three to six FAQs based on questions real customers in that trade ask. FAQ answers must be answerable from brief facts. If a natural question requires a fact you do not have (typical price, warranty length), either omit the question or write an answer that explains what determines the answer and invites a quote, without inventing a number.
 
+
+Optional contact form fields. `config.contactForm` can add a split name, a
+property address, a ZIP, a service dropdown, a required email, and a "how soon
+do you need this" dropdown. Omit the block entirely and the form is what it has
+always been. Fill it only from what the brief says; an extra required field is a
+reason a visitor gives up, so do not switch one on because it seems useful.
+
+Whatever you switch on, the posted payload keys never change. Extra answers are
+folded into `name` and `message`, because the platform parses only those. Never
+add a key to the request: it would be accepted, ignored, and the answer lost.
+
 Then run `npx tsc --noEmit` and confirm the config parses.
 Phase 2: Design direction
 This phase decides whether the site looks bought or built. It is not optional.
