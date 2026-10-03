@@ -26,6 +26,9 @@ export function generateMetadata(): Metadata {
 export default async function PrivacyPolicyPage() {
   const extra = contentExists(CONTENT) ? await loadContent(CONTENT) : null
   const host = new URL(config.domain).host
+  // The form only asks for a property address when config.contactForm turns it
+  // on, and this page has to say so when it does.
+  const addressCollected = config.contactForm?.address !== undefined && config.contactForm.address !== 'off'
   return (
     <>
       <JsonLd data={breadcrumbList(CRUMBS)} />
@@ -41,7 +44,8 @@ export default async function PrivacyPolicyPage() {
 
         <h2 className="mt-10 font-heading text-2xl font-bold text-primary-dark">Information you send us</h2>
         <p className="mt-4">
-          When you submit the contact form, we receive the name, phone number, email address, and message you enter, along
+          When you submit the contact form, we receive the name, phone number, email address,
+          {addressCollected ? ' the property address where the work is needed,' : ''} and message you enter, along
           with basic technical details such as your IP address and browser type. We use this information to respond to your
           request, prepare a quote, and schedule work. We do not sell it.
         </p>

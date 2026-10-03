@@ -166,6 +166,45 @@ export const siteConfigSchema = z
       gallery: z.array(z.string()).default([]),
     }),
 
+    /**
+     * Extra fields on the contact form. OPTIONAL, and off by default.
+     *
+     * Omit the whole block and the form renders exactly the fields it has
+     * always rendered and posts exactly the payload it has always posted, so
+     * every site built before this existed is unaffected. Each option is
+     * additive on top of that baseline.
+     *
+     * What never changes, whatever is switched on: the endpoint, the payload
+     * keys { name, phone, email, message, smsConsent, businessSlug } plus the
+     * honeypot, and the SMS consent checkbox. Extra answers are folded into
+     * `name` and `message`, because those are the two fields the platform
+     * already parses.
+     */
+    contactForm: z
+      .object({
+        /**
+         * Ask for first and last name separately. `name` is still posted as
+         * one string, "First Last".
+         */
+        splitName: z.boolean().default(false),
+        /**
+         * Street address and city. 'optional' renders them and lets the form
+         * through empty; 'required' blocks submission until both are filled.
+         * Trades that quote on site need the address; a consultant does not.
+         */
+        address: z.enum(['off', 'optional', 'required']).default('off'),
+        /** Also ask for a ZIP. Never required on its own, even when address is. */
+        zip: z.boolean().default(false),
+        /**
+         * A dropdown of config.services by name, plus "Not sure yet" so nobody
+         * is forced to self-diagnose before they can send a message.
+         */
+        serviceDropdown: z.boolean().default(false),
+        /** Require the email address. It is optional by default. */
+        emailRequired: z.boolean().default(false),
+      })
+      .optional(),
+
     /** Full origin including https:// and www. when www is the primary host. No trailing slash. */
     domain: z
       .string()
