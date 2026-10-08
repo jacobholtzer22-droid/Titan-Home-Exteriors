@@ -6,6 +6,7 @@ import rawConfig from '../site.config'
 import { CONTACT_ENDPOINT, HONEYPOT_FIELD, SCHEMA_TYPES, SLUG_REGEX, siteConfigSchema } from '../lib/config-schema'
 import { DESCRIPTION_MAX, DESCRIPTION_MIN, TITLE_MAX, TITLE_MIN } from './verify-limits'
 import { AA_RATIO, runContrastCheck } from './contrast-check'
+import { blankInterpolationProblems } from './verify-text-rules'
 
 /**
  * THE GATE. Runs after `next build` against the static output in ./out and
@@ -478,9 +479,8 @@ async function run() {
   // raw HTML: React separates adjacent text nodes with <!-- -->, so a raw-HTML
   // grep sees "Care<!-- --> handles" and misreads healthy output as blank.
   //
-  // The signals are structural, not tied to any site's copy: a missing word
-  // leaves a double space, punctuation with nothing before it, or a function
-  // word with nothing after it.
+  // The signals are structural, not tied to any site's copy; they live in
+  // scripts/verify-text-rules.ts so they can be tested against strings.
   {
     const problems: string[] = []
 
@@ -496,19 +496,6 @@ async function run() {
       problems.push('could not read node_modules/next-mdx-remote/package.json')
     }
 
-    // Words that can end a clause in real English ("fill in,", "stop by.",
-    // "want to.", "what we're known for") are kept OUT of the punctuation rule
-    // and "for" out of the trailing rule, or healthy copy trips the gate.
-    const NEVER_BEFORE_PUNCT = '(?:the|a|an|of|near|across|around|throughout|serving)'
-    const NEVER_AT_END = '(?:in|at|by|from|of|with|near|around|across|the|a|an|and|or)'
-    const RULES: { name: string; re: RegExp; trimmed?: boolean }[] = [
-      { name: 'double space inside text (empty value between two words)', re: /\S {2,}\S/ },
-      { name: 'space before punctuation ("in , IL")', re: /\S\s+[,.;:?!]/ },
-      { name: 'function word followed by punctuation ("the .")', re: new RegExp(`\\b${NEVER_BEFORE_PUNCT}\\s*[,.;:]`, 'i') },
-      { name: 'text ends with a function word ("Lawn care in")', re: new RegExp(`\\b${NEVER_AT_END}$`, 'i'), trimmed: true },
-      { name: 'text starts with punctuation (", IL")', re: /^[,.;:]/, trimmed: true },
-      { name: 'consecutive punctuation (", ,")', re: /[,;:]\s*[,.;:]/ },
-    ]
     const TEXT_ELEMENTS = 'title, h1, h2, h3, h4, h5, h6, p, li, dt, dd, summary, figcaption, td, th, blockquote, address'
 
     const seen = new Set<string>()
@@ -522,15 +509,11 @@ async function run() {
       })
       for (const raw of texts) {
         const trimmed = raw.trim()
-        if (!trimmed) continue
-        for (const rule of RULES) {
-          const subject = rule.trimmed ? trimmed : raw
-          const m = subject.match(rule.re)
-          if (!m) continue
-          const key = `${p.route}|${rule.name}|${trimmed.slice(0, 60)}`
+        for (const name of blankInterpolationProblems(raw)) {
+          const key = `${p.route}|${name}|${trimmed.slice(0, 60)}`
           if (seen.has(key)) continue
           seen.add(key)
-          problems.push(`${p.route}: ${rule.name} near "${trimmed.slice(0, 70)}"`)
+          problems.push(`${p.route}: ${name} near "${trimmed.slice(0, 70)}"`)
         }
       }
     }

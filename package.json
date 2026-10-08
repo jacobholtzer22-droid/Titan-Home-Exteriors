@@ -10,6 +10,7 @@
     "images": "tsx scripts/process-images.ts",
     "verify": "next build && tsx scripts/verify.ts",
     "typecheck": "tsc --noEmit",
+    "test": "tsx --test scripts/*.test.ts",
     "contrast": "tsx scripts/contrast-check.ts",
     "seal-contact-form": "tsx scripts/seal-contact-form.ts"
   },
