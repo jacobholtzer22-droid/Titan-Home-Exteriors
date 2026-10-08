@@ -14,6 +14,16 @@ pulls the fix by hand, and the pieces below must land together.
 | **Hero contrast gate** (verify check 19) | `lib/hero-scrim.ts` (new), `components/Hero.tsx` (reads it), `scripts/contrast-check.ts` (new), `scripts/verify.ts`, `package.json` (`contrast` script) | All of them. The CSS and the measurement model read the same stops; a repo with the gate but a hand-typed gradient in `Hero.tsx` is measuring something it does not render. |
 | **Next 14.2.35** | `package.json` + `package-lock.json` | On its own. Stay on 14.x. |
 
+**Repos with a customised `scripts/verify.ts` merge, they do not copy.** The
+template ships checks 1 to 19. OTS Mobile Detail has 21 and KA-Lights has 24,
+because each added its own checks after forking. Copying the template file over
+theirs deletes those checks silently and the gate goes green for the wrong
+reason. For such a repo, bring over the new check blocks (18 and 19), the
+`scripts/verify-text-rules.ts` and `scripts/contrast-check.ts` modules they
+import, and the two imports at the top of the file, and keep the repo's own
+numbering and extra checks intact. Diff `record(` lines before and after: the
+count must go up by exactly the number of checks added, never down.
+
 After pulling, run `npm install`, then `npm run verify`. Only checks 2 and 3 may
 fail on a template copy; on a live client repo only check 3 may fail, and only
 until `/api/verify-slug` exists on the platform.
