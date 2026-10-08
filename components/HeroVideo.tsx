@@ -1,6 +1,7 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { observePlayback, playExclusively, releasePlayback } from '@/lib/video-playback'
 
 interface Props {
   desktop: string
@@ -43,6 +44,8 @@ interface Props {
  */
 export default function HeroVideo({ desktop, mobile }: Props) {
   const [src, setSrc] = useState<string | null>(null)
+  const hostRef = useRef<HTMLDivElement | null>(null)
+  const videoRef = useRef<HTMLVideoElement | null>(null)
 
   useEffect(() => {
     // Reduced motion and data saver: the poster is the whole experience and
@@ -64,31 +67,47 @@ export default function HeroVideo({ desktop, mobile }: Props) {
 
   const mountVideo = useCallback(
     (el: HTMLVideoElement | null) => {
+      videoRef.current = el
       if (!el || !src) return
       el.setAttribute('muted', '')
       el.defaultMuted = true
       el.muted = true
       el.src = src
-      const attempt = el.play()
-      // Never surfaced: the poster underneath is already correct.
-      if (attempt && typeof attempt.catch === 'function') attempt.catch(() => {})
+      // Shared one-at-a-time registry, so the hero yields to a section band
+      // and vice versa. Never surfaced: the poster underneath is correct.
+      playExclusively(el)
     },
     [src],
   )
 
+  /**
+   * Pause once the hero scrolls away, resume when it comes back. Without
+   * this the hero kept decoding the whole way down the page while a section
+   * band was also playing. See lib/video-playback.ts.
+   */
+  useEffect(() => {
+    const host = hostRef.current
+    if (!host || !src) return
+    return observePlayback(host, () => videoRef.current)
+  }, [src])
+
+  useEffect(() => () => { if (videoRef.current) releasePlayback(videoRef.current) }, [])
+
   if (!src) return null
   return (
-    <video
-      ref={mountVideo}
-      muted
-      autoPlay
-      loop
-      playsInline
-      preload="metadata"
-      aria-hidden="true"
-      tabIndex={-1}
-      disablePictureInPicture
-      className="absolute inset-0 z-0 h-full w-full object-cover"
-    />
+    <div ref={hostRef} className="absolute inset-0 z-0">
+      <video
+        ref={mountVideo}
+        muted
+        autoPlay
+        loop
+        playsInline
+        preload="metadata"
+        aria-hidden="true"
+        tabIndex={-1}
+        disablePictureInPicture
+        className="absolute inset-0 h-full w-full object-cover"
+      />
+    </div>
   )
 }
