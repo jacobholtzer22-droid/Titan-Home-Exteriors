@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { config } from '@/lib/config'
+import { HERO_EYEBROW_OPACITY, HERO_TAGLINE_OPACITY, heroScrimCss } from '@/lib/hero-scrim'
 import theme from '@/theme'
 import Img from './Img'
 import Phone from './Phone'
@@ -35,12 +36,16 @@ export default function Hero() {
         <div
           aria-hidden="true"
           className="absolute inset-0 z-[1]"
-          style={{ background: 'linear-gradient(180deg, rgb(0 0 0 / 0.15) 0%, rgb(0 0 0 / 0.45) 45%, rgb(0 0 0 / 0.78) 100%)' }}
+          style={{ background: heroScrimCss() }}
         />
         <div className="relative z-10 mx-auto w-full max-w-page px-4 pb-16 pt-40 sm:px-6 md:pb-24">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] opacity-85">{config.displayName}</p>
+          <p className="text-sm font-semibold uppercase tracking-[0.2em]" style={{ opacity: HERO_EYEBROW_OPACITY }}>
+            {config.displayName}
+          </p>
           <h1 className="mt-4 max-w-4xl font-heading text-hero font-bold">{h1}</h1>
-          <p className="mt-6 max-w-2xl text-lg opacity-90 md:text-xl">{config.tagline}</p>
+          <p className="mt-6 max-w-2xl text-lg md:text-xl" style={{ opacity: HERO_TAGLINE_OPACITY }}>
+            {config.tagline}
+          </p>
           {cta(true)}
         </div>
       </section>

@@ -5,6 +5,7 @@ import * as cheerio from 'cheerio'
 import rawConfig from '../site.config'
 import { CONTACT_ENDPOINT, HONEYPOT_FIELD, SCHEMA_TYPES, SLUG_REGEX, siteConfigSchema } from '../lib/config-schema'
 import { DESCRIPTION_MAX, DESCRIPTION_MIN, TITLE_MAX, TITLE_MIN } from './verify-limits'
+import { AA_RATIO, runContrastCheck } from './contrast-check'
 
 /**
  * THE GATE. Runs after `next build` against the static output in ./out and
@@ -534,6 +535,35 @@ async function run() {
       }
     }
     record(18, 'no blank MDX interpolation in rendered text', problems.length === 0, problems.slice(0, 10).join('; '))
+  }
+
+  // 19. Text over the hero photograph meets WCAG AA at the brightest pixels.
+  //
+  // scripts/contrast-check.ts rebuilds the hero background (processed photo +
+  // the scrim from lib/hero-scrim.ts, the same data Hero.tsx renders) and
+  // measures the 99.5th percentile luminance under the copy. A gold eyebrow at
+  // 3.61:1 over a hero video on a client site passed every other check here.
+  {
+    if (!cfg) {
+      record(19, `text over the hero photo meets WCAG AA (${AA_RATIO}:1)`, false, 'config did not parse; nothing to measure')
+    } else {
+      try {
+        const report = await runContrastCheck(cfg)
+        if (report.skipped) {
+          record(19, `text over the hero photo meets WCAG AA (${AA_RATIO}:1)`, true, `nothing measured: ${report.skipped}`)
+        } else {
+          const summary = report.rows.map((r) => `${r.view} ${r.text} ${r.ratio.toFixed(2)}:1`).join('; ')
+          record(
+            19,
+            `text over the hero photo meets WCAG AA (${AA_RATIO}:1)`,
+            report.failures.length === 0,
+            report.failures.length ? `FAILING: ${report.failures.map((r) => `${r.view} ${r.text} ${r.ratio.toFixed(2)}:1`).join('; ')}` : summary,
+          )
+        }
+      } catch (err) {
+        record(19, `text over the hero photo meets WCAG AA (${AA_RATIO}:1)`, false, err instanceof Error ? err.message : String(err))
+      }
+    }
   }
 
   // ---------- report ----------
