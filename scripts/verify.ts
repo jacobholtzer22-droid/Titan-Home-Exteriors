@@ -468,6 +468,74 @@ async function run() {
     record(17, 'every internal link resolves to a built route', problems.size === 0, [...problems].slice(0, 8).join('; '))
   }
 
+  // 18. No blank MDX interpolation in rendered text.
+  //
+  // next-mdx-remote 6 disables {expressions} unless lib/content.ts passes
+  // blockJS: false. With them disabled the build still passes and every
+  // {config.*} renders as an empty string, so pages read "based in , ." with no
+  // error anywhere. This check reads the RENDERED TEXT of each element, never the
+  // raw HTML: React separates adjacent text nodes with <!-- -->, so a raw-HTML
+  // grep sees "Care<!-- --> handles" and misreads healthy output as blank.
+  //
+  // The signals are structural, not tied to any site's copy: a missing word
+  // leaves a double space, punctuation with nothing before it, or a function
+  // word with nothing after it.
+  {
+    const problems: string[] = []
+
+    // Static half: v6 or later must carry the option, or every expression is blank.
+    try {
+      const mdxPkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'node_modules/next-mdx-remote/package.json'), 'utf8')) as { version: string }
+      const major = Number(mdxPkg.version.split('.')[0])
+      const contentSrc = fs.readFileSync(path.join(ROOT, 'lib/content.ts'), 'utf8')
+      if (major >= 6 && !/blockJS:\s*false/.test(contentSrc)) {
+        problems.push(`next-mdx-remote ${mdxPkg.version} is installed but lib/content.ts does not pass blockJS: false, so every {config.*} in content/ renders empty`)
+      }
+    } catch {
+      problems.push('could not read node_modules/next-mdx-remote/package.json')
+    }
+
+    // Words that can end a clause in real English ("fill in,", "stop by.",
+    // "want to.", "what we're known for") are kept OUT of the punctuation rule
+    // and "for" out of the trailing rule, or healthy copy trips the gate.
+    const NEVER_BEFORE_PUNCT = '(?:the|a|an|of|near|across|around|throughout|serving)'
+    const NEVER_AT_END = '(?:in|at|by|from|of|with|near|around|across|the|a|an|and|or)'
+    const RULES: { name: string; re: RegExp; trimmed?: boolean }[] = [
+      { name: 'double space inside text (empty value between two words)', re: /\S {2,}\S/ },
+      { name: 'space before punctuation ("in , IL")', re: /\S\s+[,.;:?!]/ },
+      { name: 'function word followed by punctuation ("the .")', re: new RegExp(`\\b${NEVER_BEFORE_PUNCT}\\s*[,.;:]`, 'i') },
+      { name: 'text ends with a function word ("Lawn care in")', re: new RegExp(`\\b${NEVER_AT_END}$`, 'i'), trimmed: true },
+      { name: 'text starts with punctuation (", IL")', re: /^[,.;:]/, trimmed: true },
+      { name: 'consecutive punctuation (", ,")', re: /[,;:]\s*[,.;:]/ },
+    ]
+    const TEXT_ELEMENTS = 'title, h1, h2, h3, h4, h5, h6, p, li, dt, dd, summary, figcaption, td, th, blockquote, address'
+
+    const seen = new Set<string>()
+    for (const p of pages) {
+      const $ = cheerio.load(p.html)
+      $('script, style, noscript').remove()
+      const texts: string[] = [$('meta[name="description"]').attr('content') ?? '']
+      $(TEXT_ELEMENTS).each((_, el) => {
+        // .text() concatenates text nodes only; comment separators are dropped.
+        texts.push($(el).text().replace(/ /g, ' '))
+      })
+      for (const raw of texts) {
+        const trimmed = raw.trim()
+        if (!trimmed) continue
+        for (const rule of RULES) {
+          const subject = rule.trimmed ? trimmed : raw
+          const m = subject.match(rule.re)
+          if (!m) continue
+          const key = `${p.route}|${rule.name}|${trimmed.slice(0, 60)}`
+          if (seen.has(key)) continue
+          seen.add(key)
+          problems.push(`${p.route}: ${rule.name} near "${trimmed.slice(0, 70)}"`)
+        }
+      }
+    }
+    record(18, 'no blank MDX interpolation in rendered text', problems.length === 0, problems.slice(0, 10).join('; '))
+  }
+
   // ---------- report ----------
   results.sort((a, b) => a.id - b.id)
   const nameWidth = Math.max(...results.map((r) => r.name.length))
