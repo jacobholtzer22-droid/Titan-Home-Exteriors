@@ -18,9 +18,10 @@
  * - The honeypot uses a nonsense field name inside a `hidden` wrapper. Chrome
  *   autofills off-screen inputs and anything named "company", which silently
  *   killed real leads before, so neither technique is used.
- * - Success messaging is a generic thank-you regardless of status. The endpoint
- *   returns 200 even when a downstream write fails, so no claim beyond
- *   "we received it" is honest.
+ * - Success messaging is a generic thank-you, and it is shown ONLY for a 2xx.
+ *   The endpoint returns 200 even when a downstream write fails, so no claim
+ *   beyond "we received it" is honest even then; but a non-2xx means the lead
+ *   did not land at all and the visitor is told to call instead.
  *
  * OPTIONAL EXTRA FIELDS, added without changing any of the above.
  *
@@ -200,7 +201,7 @@ export default function ContactForm() {
 
     setStatus('sending')
     try {
-      await fetch(CONTACT_ENDPOINT, {
+      const res = await fetch(CONTACT_ENDPOINT, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -213,8 +214,24 @@ export default function ContactForm() {
           [HONEYPOT_FIELD]: honeypot,
         }),
       })
+      // A fetch that RESOLVES is not a lead that landed. Before this check,
+      // any response at all showed "Thanks, we received your message": a 500,
+      // a 502 from the platform being down, or the 404 the endpoint returns
+      // when businessSlug matches no Business row. In every one of those the
+      // lead is gone and the visitor has been told it arrived, so they do not
+      // call instead. A typo'd slug in site.config.ts lost 100% of a site's
+      // leads with a thank-you on screen for each one.
+      //
+      // Only a 2xx may show the success state. Everything else falls through
+      // to the error state, which puts the phone number on screen.
+      if (!res.ok) {
+        setStatus('error')
+        return
+      }
       setStatus('done')
     } catch {
+      // Network failure, DNS failure, or a CORS preflight that never
+      // completed. Same outcome for the visitor: call instead.
       setStatus('error')
     }
   }
