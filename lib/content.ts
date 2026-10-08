@@ -61,6 +61,15 @@ export async function loadContent(
     options: {
       parseFrontmatter: true,
       scope: { config, ...scope },
+      // next-mdx-remote 6 (CVE-2026-0969; Vercel blocks deploys on 5.x) turns
+      // {expressions} OFF by default. Left off, the build still passes but every
+      // {config.*} in content/ renders as an empty string ("based in , ."), with
+      // no error anywhere. Content is authored in this repo, never user input, so
+      // expressions stay on; blockDangerousJS keeps eval, Function, process, and
+      // require blocked. verify.ts check 18 scans the rendered text for the blank
+      // interpolations this would produce, so removing these lines fails the gate.
+      blockJS: false,
+      blockDangerousJS: true,
     },
   })
   return { content, frontmatter: frontmatter ?? {} }
