@@ -50,6 +50,14 @@
  * ZIP has two homes. With `address` on it belongs to the address and is written
  * into the Address line, because that is how an address is written. With
  * `address` off it stands alone as its own ZIP line.
+ *
+ * COPY OPTIONS. `messageLabel`, `messagePlaceholder` and `submitLabel` change
+ * wording only. They add no field, no payload key and no validation rule, and
+ * each defaults to the exact text this form has always rendered. The message
+ * placeholder is where a site asks for several facts without adding several
+ * inputs, which is the whole point: a short form converts better than a long
+ * one. "Sending" is not configurable, because an in-flight button is state,
+ * not copy.
  */
 
 import { useState, type FormEvent } from 'react'
@@ -65,6 +73,13 @@ const DEFAULTS = {
   serviceDropdown: false,
   emailRequired: false,
   timeframe: undefined as { label: string; options: string[]; required?: boolean } | undefined,
+  // Copy only. These three are the exact strings this form has always
+  // rendered, so a site that sets none of them is byte-identical to before
+  // they existed. messagePlaceholder has no default: the attribute was never
+  // present, and `placeholder=""` is not the same HTML as no placeholder.
+  messageLabel: 'What do you need done?',
+  messagePlaceholder: undefined as string | undefined,
+  submitLabel: 'Send Message',
 }
 
 /** US ZIP, five digits, optionally +4. */
@@ -400,9 +415,15 @@ export default function ContactForm() {
 
         <div className="sm:col-span-2">
           <label htmlFor="contact-message" className="text-sm font-semibold text-ink">
-            What do you need done?
+            {opts.messageLabel}
           </label>
-          <textarea id="contact-message" name="message" rows={4} className={field} />
+          <textarea
+            id="contact-message"
+            name="message"
+            rows={4}
+            className={field}
+            {...(opts.messagePlaceholder ? { placeholder: opts.messagePlaceholder } : {})}
+          />
         </div>
       </div>
 
@@ -439,7 +460,7 @@ export default function ContactForm() {
         disabled={status === 'sending'}
         className="mt-6 w-full rounded-[var(--radius)] bg-accent px-6 py-3 text-base font-semibold text-on-accent hover:bg-accent-dark disabled:opacity-60 sm:w-auto"
       >
-        {status === 'sending' ? 'Sending' : 'Send Message'}
+        {status === 'sending' ? 'Sending' : opts.submitLabel}
       </button>
     </form>
   )

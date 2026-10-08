@@ -226,6 +226,33 @@ export const siteConfigSchema = z
         serviceDropdown: z.boolean().default(false),
         /** Require the email address. It is optional by default. */
         emailRequired: z.boolean().default(false),
+
+        /**
+         * COPY ONLY. The three options below change wording, never a field,
+         * never a payload key, and never a validation rule. They exist because
+         * the message box and the submit button are the two places where
+         * generic wording costs conversions, and a DJ, a roofer and a
+         * consultant need different words there.
+         *
+         * Each default is the exact text this form has always rendered, so a
+         * site that omits them is byte-identical to before they existed.
+         */
+
+        /** Label above the message textarea. */
+        messageLabel: z.string().min(4).default('What do you need done?'),
+        /**
+         * Placeholder inside the message textarea. OPTIONAL WITH NO DEFAULT on
+         * purpose: the form has never had a placeholder here, and defaulting to
+         * an empty string would emit `placeholder=""` where there was no
+         * attribute at all. Unset means the attribute is absent.
+         *
+         * This is the one place to ask for several facts without adding
+         * several fields: a short form converts better than a long one, so the
+         * extra questions go in the box the visitor is already typing in.
+         */
+        messagePlaceholder: z.string().min(4).optional(),
+        /** Submit button text. "Sending" while in flight is not configurable. */
+        submitLabel: z.string().min(4).default('Send Message'),
       })
       .optional(),
 
