@@ -164,6 +164,18 @@ export const siteConfigSchema = z
       hero: z.string().nullable(),
       about: z.string().nullable(),
       gallery: z.array(z.string()).default([]),
+      /**
+       * Optional full-bleed hero footage, paths under /public.
+       *
+       * There is no poster field on purpose: `hero` above IS the poster. It
+       * is already processed, already preloaded by <Img priority>, already
+       * the LCP element, and already what verify check 19 measures the hero
+       * copy against. A separate poster would be a second source of truth
+       * for the frame a visitor actually reads the H1 over.
+       *
+       * Requires `hero` to be set; the refine below enforces it.
+       */
+      heroVideo: z.object({ desktop: z.string().min(2), mobile: z.string().min(2) }).nullable().default(null),
     }),
 
     /**
@@ -263,6 +275,17 @@ export const siteConfigSchema = z
       .regex(/^https:\/\/[^/]+$/, 'origin only: https://www.example-host.com with no path or trailing slash'),
   })
   .strict()
+  .superRefine((cfg, ctx) => {
+    // Footage with no poster would leave the hero blank until the clip
+    // decodes, and would leave check 19 with nothing to measure.
+    if (cfg.images.heroVideo && !cfg.images.hero) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['images', 'heroVideo'],
+        message: 'images.hero must be set when images.heroVideo is: the hero image is the video poster and the LCP element',
+      })
+    }
+  })
 
 export type SiteConfigInput = z.input<typeof siteConfigSchema>
 export type SiteConfigParsed = z.output<typeof siteConfigSchema>

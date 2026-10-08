@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { config } from '@/lib/config'
 import { HERO_EYEBROW_OPACITY, HERO_TAGLINE_OPACITY, heroScrimCss } from '@/lib/hero-scrim'
 import theme from '@/theme'
+import HeroVideo from './HeroVideo'
 import Img from './Img'
 import Phone from './Phone'
 
@@ -13,6 +14,10 @@ import Phone from './Phone'
  * CTA left-aligned in the lower third. 'split': large photo one side, oversized
  * type the other, for photography that cannot carry a full bleed. With no hero
  * image configured, 'split' renders type only.
+ *
+ * config.images.heroVideo adds optional footage over the full-bleed poster.
+ * See components/HeroVideo.tsx: the poster stays underneath and stays the
+ * LCP element, and the clip is armed on idle so it is not in first load.
  */
 export default function Hero() {
   const h1 = `${config.primaryService.name} in ${config.primaryCity}, ${config.primaryState}`
@@ -33,6 +38,8 @@ export default function Hero() {
     return (
       <section className="relative isolate flex min-h-[78vh] items-end overflow-hidden bg-primary-dark text-on-primary">
         <Img name={hero} priority sizes="100vw" className="absolute inset-0 z-0 h-full w-full object-cover" />
+        {/* Optional. Sits on the poster at the same z, never replaces it. */}
+        {config.images.heroVideo && <HeroVideo {...config.images.heroVideo} />}
         <div
           aria-hidden="true"
           className="absolute inset-0 z-[1]"
