@@ -19,10 +19,17 @@ export default function BeforeAfter({ pairs, heading = 'Before and After' }: { p
       <div className="mt-10 space-y-12">
         {rows.map((pair) => (
           <div key={`${pair.before}-${pair.after}`}>
+            {/* The client's "before" shots are phone portraits and the "after"
+                shots are landscape. A shared aspect-[4/3] box with object-cover
+                cropped the subject out of every before, which is the one thing
+                these pairs exist to show; letting both run at natural size left
+                one image twice the height of the other. So: equal height, width
+                auto, centred on the soft ground. Nothing is cropped and the
+                rows stay even. */}
             <div className="grid gap-3 sm:grid-cols-2">
               {([['Before', pair.before], ['After', pair.after]] as const).map(([label, name]) => (
-                <figure key={name} className="relative overflow-hidden rounded-site border border-line">
-                  <Img name={name} sizes="(min-width: 640px) 50vw, 100vw" className="aspect-[4/3] h-auto w-full object-cover" />
+                <figure key={name} className="relative overflow-hidden rounded-site border border-line bg-primary-soft">
+                  <Img name={name} sizes="(min-width: 640px) 50vw, 100vw" className="mx-auto h-64 w-auto md:h-[25rem]" />
                   <figcaption className="absolute left-0 top-0 bg-primary-dark px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-on-primary">
                     {label}
                   </figcaption>

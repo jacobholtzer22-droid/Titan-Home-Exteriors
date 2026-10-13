@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import AreaList from '@/components/AreaList'
+import BeforeAfter from '@/components/BeforeAfter'
 import CoverageList from '@/components/CoverageList'
 import CtaBand from '@/components/CtaBand'
 import JsonLd from '@/components/JsonLd'
@@ -49,6 +50,7 @@ export default async function AreaPage({ params }: { params: { slug: string } })
       <div className="mx-auto max-w-page px-4 sm:px-6">
         <article className="max-w-3xl pt-10">{content}</article>
       </div>
+      <BeforeAfter heading="Recent window and door work" />
       <ServiceGrid heading={`Services in ${area.name}`} />
       <AreaList heading="Nearby Areas" exclude={area.slug} />
       <CoverageList />

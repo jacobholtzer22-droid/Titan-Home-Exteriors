@@ -1,1 +1,118 @@
-{}
+{
+  "bronze-sliding-glass-door-patio.jpg": {
+    "width": 768,
+    "height": 1024,
+    "alt": "Three-panel bronze-framed sliding glass door installed on a covered paver patio beneath a ceiling fan",
+    "base": "bronze-sliding-glass-door-patio",
+    "sizes": [
+      640
+    ]
+  },
+  "french-doors-install-in-progress.jpg": {
+    "width": 1153,
+    "height": 2048,
+    "alt": "White French doors going into a waterfront home, with house wrap and a new impact window alongside",
+    "base": "french-doors-install-in-progress",
+    "sizes": [
+      640,
+      1024
+    ]
+  },
+  "french-doors-interior-installed.jpg": {
+    "width": 2400,
+    "height": 1800,
+    "alt": "White French doors seen from inside a screened room with terracotta tile flooring and a patio beyond",
+    "base": "french-doors-interior-installed",
+    "sizes": [
+      640,
+      1024,
+      1920
+    ]
+  },
+  "lanai-screen-before.jpg": {
+    "width": 1800,
+    "height": 2400,
+    "alt": "Screened lanai with aluminum framing and a pet door before replacement, under a hip roof",
+    "base": "lanai-screen-before",
+    "sizes": [
+      640,
+      1024
+    ]
+  },
+  "lanai-sliding-glass-doors-after.jpg": {
+    "width": 2400,
+    "height": 1800,
+    "alt": "The same lanai enclosed with a white two-panel sliding glass door and finished turf inside",
+    "base": "lanai-sliding-glass-doors-after",
+    "sizes": [
+      640,
+      1024,
+      1920
+    ]
+  },
+  "patio-screen-before.jpg": {
+    "width": 2400,
+    "height": 1800,
+    "alt": "Long screened patio running along the back of a two-story stucco home before replacement",
+    "base": "patio-screen-before",
+    "sizes": [
+      640,
+      1024,
+      1920
+    ]
+  },
+  "patio-windows-glass-door-after.jpg": {
+    "width": 2300,
+    "height": 1710,
+    "alt": "The same patio enclosed with six white picture windows and a white glass entry door",
+    "base": "patio-windows-glass-door-after",
+    "sizes": [
+      640,
+      1024,
+      1920
+    ]
+  },
+  "side-screen-panel-before.jpg": {
+    "width": 1800,
+    "height": 2400,
+    "alt": "Screen panel under the eave on the side of a stucco home before window replacement",
+    "base": "side-screen-panel-before",
+    "sizes": [
+      640,
+      1024
+    ]
+  },
+  "side-sliding-window-after.jpg": {
+    "width": 2400,
+    "height": 1800,
+    "alt": "White two-panel sliding window installed in the side wall of a stucco home, palms reflected",
+    "base": "side-sliding-window-after",
+    "sizes": [
+      640,
+      1024,
+      1920
+    ]
+  },
+  "stucco-home-arched-windows-a.jpg": {
+    "width": 2011,
+    "height": 1344,
+    "alt": "Front elevation of a single-story stucco home with arched windows and a double entry door",
+    "base": "stucco-home-arched-windows-a",
+    "sizes": [
+      640,
+      1024,
+      1920
+    ]
+  },
+  "stucco-home-arched-windows-b.jpg": {
+    "width": 2115,
+    "height": 1764,
+    "alt": "Closer view of the same stucco home showing the arched entry and dark reflective window glass",
+    "base": "stucco-home-arched-windows-b",
+    "sizes": [
+      640,
+      1024,
+      1920
+    ]
+  }
+}
