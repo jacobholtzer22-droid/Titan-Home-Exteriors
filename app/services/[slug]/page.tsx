@@ -5,6 +5,7 @@ import FaqAccordion from '@/components/FaqAccordion'
 import Img from '@/components/Img'
 import JsonLd from '@/components/JsonLd'
 import PageHeader from '@/components/PageHeader'
+import PromoBand from '@/components/PromoBand'
 import ServiceGrid from '@/components/ServiceGrid'
 import { config, getService } from '@/lib/config'
 import { loadContent, readFrontmatter } from '@/lib/content'
@@ -76,6 +77,7 @@ export default async function ServicePage({ params }: { params: { slug: string }
         </aside>
       </div>
 
+      <PromoBand />
       <FaqAccordion faqs={service.faqs} heading={`${service.name} Questions`} />
       <ServiceGrid heading="Other Services" exclude={service.slug} />
       <CtaBand heading={`Need ${service.name.toLowerCase()} in ${config.primaryCity}?`} />

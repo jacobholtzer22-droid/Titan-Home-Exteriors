@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import AreaList from '@/components/AreaList'
+import CoverageList from '@/components/CoverageList'
 import CtaBand from '@/components/CtaBand'
 import JsonLd from '@/components/JsonLd'
 import PageHeader from '@/components/PageHeader'
@@ -45,9 +46,12 @@ export default async function AreaPage({ params }: { params: { slug: string } })
         intro={area.county ? `Serving ${area.name} and the rest of ${area.county}.` : undefined}
         crumbs={crumbs}
       />
-      <article className="mx-auto max-w-3xl px-4 pt-6 sm:px-6">{content}</article>
+      <div className="mx-auto max-w-page px-4 sm:px-6">
+        <article className="max-w-3xl pt-10">{content}</article>
+      </div>
       <ServiceGrid heading={`Services in ${area.name}`} />
       <AreaList heading="Nearby Areas" exclude={area.slug} />
+      <CoverageList />
       <CtaBand heading={`Get a quote in ${area.name}`} />
     </>
   )

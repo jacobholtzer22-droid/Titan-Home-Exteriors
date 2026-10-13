@@ -1,0 +1,15 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "redirects": [
+    { "source": "/products/windows", "destination": "/services/window-replacement", "statusCode": 301 },
+    { "source": "/products/sliding-glass-doors", "destination": "/services/entry-and-patio-doors", "statusCode": 301 },
+    { "source": "/products/entry-doors", "destination": "/services/entry-and-patio-doors", "statusCode": 301 },
+    { "source": "/products/siding", "destination": "/services/siding-installation", "statusCode": 301 },
+    { "source": "/products", "destination": "/services", "statusCode": 301 },
+    { "source": "/financing", "destination": "/", "statusCode": 301 },
+    { "source": "/faq", "destination": "/", "statusCode": 301 },
+    { "source": "/areas", "destination": "/contact", "statusCode": 301 },
+    { "source": "/counties", "destination": "/contact", "statusCode": 301 },
+    { "source": "/titan-welcome-guide-2026-08-19.pdf", "destination": "/", "statusCode": 301 }
+  ]
+}

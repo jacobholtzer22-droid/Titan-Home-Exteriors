@@ -41,28 +41,41 @@ export interface Theme {
   radius: number
   /** The ONE shadow for the site, as a CSS box-shadow value. 'none' is valid. */
   shadow: string
+  /**
+   * The client's logo, or null to render a text wordmark instead.
+   *
+   * `src` is a path under /public (the file is NOT processed by the image
+   * pipeline: a logo is line art, not a photograph, and must not be re-encoded
+   * to WebP at photo widths). components/Header.tsx reads this and nothing
+   * else does, so dropping a logo in later is a one-line config change.
+   */
+  logo: { src: string; alt: string } | null
 }
 
-// Shipped default follows the "Cultivated" direction for the lawn-care sample:
-// deep green, warm off-white, one muted cedar accent, serif display (app/fonts.ts).
+// Trade professional: the near-black and electric blue of the client's own logo,
+// so the logo drops onto the dark header without a clash. One accent, no
+// gradient anywhere (the logo has one; the site does not). Hard edges.
 const theme: Theme = {
   palette: {
-    primary: '#1E3D2C',
-    primaryDark: '#152B1F',
-    primarySoft: '#E9EFE8',
-    accent: '#A8623A',
-    accentDark: '#8B4E2C',
-    bg: '#F6F3EC',
-    surface: '#FDFBF7',
-    ink: '#1A1F1B',
-    muted: '#5C6660',
-    line: '#DCD8CE',
-    onPrimary: '#F6F3EC',
-    onAccent: '#F6F3EC',
+    primary: '#0E1116',
+    primaryDark: '#080A0D',
+    primarySoft: '#E8EEF6',
+    accent: '#1B5FD6',
+    accentDark: '#15489F',
+    bg: '#F4F6F9',
+    surface: '#FBFCFD',
+    ink: '#14181F',
+    muted: '#5B6573',
+    line: '#D9DEE6',
+    onPrimary: '#F4F6F9',
+    onAccent: '#F7FAFF',
   },
-  heroVariant: 'full-bleed',
-  radius: 0.375,
-  shadow: '0 1px 2px rgb(20 30 24 / 0.08)',
+  // 'split': the strongest photo is a 768px-wide portrait and the rest were
+  // shot off a monitor. A full bleed would enlarge their flaws.
+  heroVariant: 'split',
+  radius: 0.25,
+  shadow: '0 1px 2px rgb(8 10 13 / 0.10)',
+  logo: null,
 }
 
 export default theme

@@ -100,6 +100,21 @@ export const siteConfigSchema = z
       )
       .min(1),
 
+    /**
+     * Every town the business will actually drive to, grouped by county.
+     * Rendered as plain text, never as links: the serviceAreas array above is
+     * what gets a page each, and a hundred linked town names is a doorway-page
+     * pattern. Empty by default, in which case nothing renders.
+     */
+    coverage: z
+      .array(
+        z.object({
+          county: z.string().min(3),
+          towns: z.array(z.string().min(2)).min(1),
+        }),
+      )
+      .default([]),
+
     services: z
       .array(
         z.object({
@@ -164,6 +179,20 @@ export const siteConfigSchema = z
       hero: z.string().nullable(),
       about: z.string().nullable(),
       gallery: z.array(z.string()).default([]),
+      /**
+       * Before and after pairs, by manifest filename, with a caption that says
+       * what changed. Both files must be in the manifest. Empty by default;
+       * components/BeforeAfter.tsx renders nothing then.
+       */
+      beforeAfter: z
+        .array(
+          z.object({
+            before: z.string(),
+            after: z.string(),
+            caption: z.string().min(10),
+          }),
+        )
+        .default([]),
       /**
        * Optional full-bleed hero footage, paths under /public.
        *
@@ -267,6 +296,31 @@ export const siteConfigSchema = z
         submitLabel: z.string().min(4).default('Send Message'),
       })
       .optional(),
+
+    /**
+     * One standing promotion, or null. The ONLY place a dollar figure is
+     * allowed to be authored: content files are scanned for bare prices
+     * (verify check 7), so the number lives here and reaches the page through
+     * components/PromoBand.tsx. null renders no band at all.
+     *
+     * finePrint is null until the client supplies real terms. Never invent them.
+     */
+    offer: z
+      .object({
+        headline: z.string().min(8),
+        detail: z.string().min(20),
+        finePrint: z.string().nullable(),
+      })
+      .nullable(),
+
+    /**
+     * true while the site is parked on a Vercel URL before the domain cutover:
+     * every page is noindex, nofollow and robots.txt disallows everything, so
+     * the staging host can never be indexed under the client's name.
+     *
+     * flip to false at launch, then redeploy
+     */
+    prelaunch: z.boolean().default(false),
 
     /** Full origin including https:// and www. when www is the primary host. No trailing slash. */
     domain: z

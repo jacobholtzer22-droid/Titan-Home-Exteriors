@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import type { MDXComponents } from 'mdx/types'
 import type { ComponentPropsWithoutRef } from 'react'
+import BeforeAfter from './BeforeAfter'
+import CoverageList from './CoverageList'
 import Credentials from './Credentials'
 import Gallery from './Gallery'
 import Img from './Img'
@@ -53,4 +55,6 @@ export const mdxComponents: MDXComponents = {
   ServiceGrid,
   AreaList,
   Credentials,
+  BeforeAfter,
+  CoverageList,
 }

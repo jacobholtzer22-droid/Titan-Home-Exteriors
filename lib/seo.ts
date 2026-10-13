@@ -45,7 +45,10 @@ export function buildTitle(args: Pick<BuildMetadataArgs, 'kind' | 'service' | 'a
       return `${args.service.name} in ${primaryCity} | ${displayName}`
     case 'area':
       if (!args.area) throw new Error('buildTitle: kind "area" needs an area')
-      return `${primaryService.name} in ${args.area.name}, ${primaryState} | ${displayName}`
+      // No state in the area title: with a 20-character display name, a
+      // 14-character town ("St. Petersburg") pushes the rendered title past
+      // the 60-character limit check 13 enforces. The H1 still carries it.
+      return `${primaryService.name} in ${args.area.name} | ${displayName}`
     case 'services':
       return `All Services in ${primaryCity} | ${displayName}`
     case 'about':

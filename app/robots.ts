@@ -20,6 +20,11 @@ const AI_AGENTS = [
 ]
 
 export default function robots(): MetadataRoute.Robots {
+  // Pre-launch: nothing is crawlable and no sitemap is advertised, so the
+  // staging host cannot be indexed under the client's name.
+  if (config.prelaunch) {
+    return { rules: [{ userAgent: '*', disallow: '/' }] }
+  }
   return {
     rules: [{ userAgent: '*', allow: '/' }, ...AI_AGENTS.map((userAgent) => ({ userAgent, allow: '/' }))],
     sitemap: new URL('/sitemap.xml', config.domain).toString(),

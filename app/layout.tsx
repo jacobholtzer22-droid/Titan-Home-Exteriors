@@ -16,7 +16,8 @@ export const metadata: Metadata = {
     template: TITLE_TEMPLATE,
   },
   applicationName: config.displayName,
-  robots: { index: true, follow: true },
+  // Parked on a Vercel URL until the domain cutover: noindex until config.prelaunch is false.
+  robots: config.prelaunch ? { index: false, follow: false } : { index: true, follow: true },
 }
 
 const cssVars = {

@@ -1,4 +1,4 @@
-import { Fraunces, Manrope } from 'next/font/google'
+import { Manrope, Sora } from 'next/font/google'
 
 /**
  * The two typefaces for this site, loaded through next/font so they are
@@ -9,9 +9,9 @@ import { Fraunces, Manrope } from 'next/font/google'
  * The display face must have character. Never Inter, system-ui, or Arial for
  * headings. See AGENT.md Phase 2 for the pairings per direction.
  */
-export const headingFont = Fraunces({
+export const headingFont = Sora({
   subsets: ['latin'],
-  weight: ['500', '700'],
+  weight: ['600', '700'],
   variable: '--font-heading',
   display: 'swap',
 })

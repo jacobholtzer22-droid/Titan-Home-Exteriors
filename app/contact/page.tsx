@@ -2,7 +2,9 @@ import type { Metadata } from 'next'
 import ContactDetails from '@/components/ContactDetails'
 import ContactForm from '@/components/ContactForm'
 import JsonLd from '@/components/JsonLd'
+import CoverageList from '@/components/CoverageList'
 import PageHeader from '@/components/PageHeader'
+import PromoBand from '@/components/PromoBand'
 import { config } from '@/lib/config'
 import { loadContent, readFrontmatter } from '@/lib/content'
 import { breadcrumbList } from '@/lib/schema'
@@ -25,6 +27,7 @@ export default async function ContactPage() {
     <>
       <JsonLd data={breadcrumbList(CRUMBS)} />
       <PageHeader title={`Contact ${config.displayName}`} crumbs={CRUMBS} />
+      <PromoBand />
       <div className="mx-auto grid max-w-page gap-10 px-4 pt-10 sm:px-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <article className="mb-8">{content}</article>
@@ -34,6 +37,7 @@ export default async function ContactPage() {
           <ContactDetails />
         </aside>
       </div>
+      <CoverageList />
     </>
   )
 }
