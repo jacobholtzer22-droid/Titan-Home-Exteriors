@@ -8,7 +8,7 @@ import { config } from '@/lib/config'
  * place a price may be authored (verify check 7 scans content/ for bare
  * figures). No icon, no emoji, no gradient: it is a band of type and one button.
  */
-export default function PromoBand() {
+export default function PromoBand({ href = '/contact' }: { href?: string }) {
   const offer = config.offer
   if (!offer) return null
   return (
@@ -20,7 +20,7 @@ export default function PromoBand() {
           {offer.finePrint && <p className="mt-2 text-sm text-muted">{offer.finePrint}</p>}
         </div>
         <Link
-          href="/contact"
+          href={href}
           className="rounded-site bg-accent px-6 py-3.5 text-base font-semibold text-on-accent hover:bg-accent-dark"
         >
           Claim This Offer

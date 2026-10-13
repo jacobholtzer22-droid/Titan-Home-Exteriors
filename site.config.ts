@@ -361,7 +361,6 @@ const siteConfig = {
       'patio-windows-glass-door-after.jpg',
       'french-doors-interior-installed.jpg',
       'side-sliding-window-after.jpg',
-      'stucco-home-arched-windows-b.jpg',
     ],
     beforeAfter: [
       {

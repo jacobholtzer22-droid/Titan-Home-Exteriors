@@ -27,11 +27,15 @@ export default async function ContactPage() {
     <>
       <JsonLd data={breadcrumbList(CRUMBS)} />
       <PageHeader title={`Contact ${config.displayName}`} crumbs={CRUMBS} />
-      <PromoBand />
+      <PromoBand href="#contact-form" />
       <div className="mx-auto grid max-w-page gap-10 px-4 pt-10 sm:px-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <article className="mb-8">{content}</article>
-          <ContactForm />
+          {/* The anchor lives on the wrapper: components/ContactForm.tsx is
+              checksum-sealed (verify check 4) and must not be edited. */}
+          <div id="contact-form" className="scroll-mt-24">
+            <ContactForm />
+          </div>
         </div>
         <aside>
           <ContactDetails />
