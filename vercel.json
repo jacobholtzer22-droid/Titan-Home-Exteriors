@@ -1,15 +1,155 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "redirects": [
-    { "source": "/products/windows", "destination": "/services/window-replacement", "statusCode": 301 },
-    { "source": "/products/sliding-glass-doors", "destination": "/services/entry-and-patio-doors", "statusCode": 301 },
-    { "source": "/products/entry-doors", "destination": "/services/entry-and-patio-doors", "statusCode": 301 },
-    { "source": "/products/siding", "destination": "/services/siding-installation", "statusCode": 301 },
-    { "source": "/products", "destination": "/services", "statusCode": 301 },
-    { "source": "/financing", "destination": "/", "statusCode": 301 },
-    { "source": "/faq", "destination": "/", "statusCode": 301 },
-    { "source": "/areas", "destination": "/contact", "statusCode": 301 },
-    { "source": "/counties", "destination": "/contact", "statusCode": 301 },
-    { "source": "/titan-welcome-guide-2026-08-19.pdf", "destination": "/", "statusCode": 301 }
+    {
+      "source": "/products/window-installation",
+      "destination": "/services/window-replacement",
+      "statusCode": 301
+    },
+    {
+      "source": "/products/window-replacement",
+      "destination": "/services/window-replacement",
+      "statusCode": 301
+    },
+    {
+      "source": "/products/impact-window-installation",
+      "destination": "/services/impact-windows-and-doors",
+      "statusCode": 301
+    },
+    {
+      "source": "/products/hurricane-window-installation",
+      "destination": "/services/impact-windows-and-doors",
+      "statusCode": 301
+    },
+    {
+      "source": "/products/sliding-glass-door-installation",
+      "destination": "/services/entry-and-patio-doors",
+      "statusCode": 301
+    },
+    {
+      "source": "/products/sliding-glass-door-replacement",
+      "destination": "/services/entry-and-patio-doors",
+      "statusCode": 301
+    },
+    {
+      "source": "/products/entry-door-installation",
+      "destination": "/services/entry-and-patio-doors",
+      "statusCode": 301
+    },
+    {
+      "source": "/products/entry-door-replacement",
+      "destination": "/services/entry-and-patio-doors",
+      "statusCode": 301
+    },
+    {
+      "source": "/products/siding-installation",
+      "destination": "/services/siding-installation",
+      "statusCode": 301
+    },
+    {
+      "source": "/products/siding-replacement",
+      "destination": "/services/siding-installation",
+      "statusCode": 301
+    },
+    {
+      "source": "/services/window-installation",
+      "destination": "/services/window-replacement",
+      "statusCode": 301
+    },
+    {
+      "source": "/services/door-installation",
+      "destination": "/services/entry-and-patio-doors",
+      "statusCode": 301
+    },
+    {
+      "source": "/areas/tampa",
+      "destination": "/",
+      "statusCode": 301
+    },
+    {
+      "source": "/areas/sarasota",
+      "destination": "/areas",
+      "statusCode": 301
+    },
+    {
+      "source": "/areas/ocala",
+      "destination": "/areas",
+      "statusCode": 301
+    },
+    {
+      "source": "/areas/kissimmee",
+      "destination": "/areas",
+      "statusCode": 301
+    },
+    {
+      "source": "/areas/winter-haven",
+      "destination": "/areas",
+      "statusCode": 301
+    },
+    {
+      "source": "/areas/orlando",
+      "destination": "/areas",
+      "statusCode": 301
+    },
+    {
+      "source": "/counties/sarasota",
+      "destination": "/areas",
+      "statusCode": 301
+    },
+    {
+      "source": "/counties/citrus",
+      "destination": "/areas",
+      "statusCode": 301
+    },
+    {
+      "source": "/counties/hardee",
+      "destination": "/areas",
+      "statusCode": 301
+    },
+    {
+      "source": "/counties/highlands",
+      "destination": "/areas",
+      "statusCode": 301
+    },
+    {
+      "source": "/counties/desoto",
+      "destination": "/areas",
+      "statusCode": 301
+    },
+    {
+      "source": "/counties/charlotte",
+      "destination": "/areas",
+      "statusCode": 301
+    },
+    {
+      "source": "/counties/lee",
+      "destination": "/areas",
+      "statusCode": 301
+    },
+    {
+      "source": "/counties/collier",
+      "destination": "/areas",
+      "statusCode": 301
+    },
+    {
+      "source": "/counties/sumter",
+      "destination": "/areas",
+      "statusCode": 301
+    },
+    {
+      "source": "/counties/marion",
+      "destination": "/areas",
+      "statusCode": 301
+    },
+    {
+      "source": "/counties/osceola",
+      "destination": "/areas",
+      "statusCode": 301
+    },
+    {
+      "source": "/titan-welcome-guide-2026-08-19.pdf",
+      "destination": "/",
+      "statusCode": 301
+    }
   ]
 }

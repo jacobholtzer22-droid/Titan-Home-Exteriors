@@ -1,14 +1,20 @@
 import type { Metadata } from 'next'
-import AreaList from '@/components/AreaList'
 import BeforeAfter from '@/components/BeforeAfter'
 import CtaBand from '@/components/CtaBand'
+import Em from '@/components/Em'
+import Eyebrow from '@/components/Eyebrow'
 import FaqAccordion from '@/components/FaqAccordion'
 import Gallery from '@/components/Gallery'
 import Hero from '@/components/Hero'
 import JsonLd from '@/components/JsonLd'
+import ProcessStepper from '@/components/ProcessStepper'
 import PromoBand from '@/components/PromoBand'
+import Reveal from '@/components/Reveal'
 import Reviews from '@/components/Reviews'
-import ServiceGrid from '@/components/ServiceGrid'
+import ServiceAreaSection from '@/components/ServiceAreaSection'
+import ServiceCards from '@/components/ServiceCards'
+import TitanPromise from '@/components/TitanPromise'
+import WhyTitan from '@/components/WhyTitan'
 import { config } from '@/lib/config'
 import { loadContent, readFrontmatter } from '@/lib/content'
 import { faqPage, localBusiness, organization, website } from '@/lib/schema'
@@ -31,16 +37,31 @@ export default async function HomePage() {
       <JsonLd data={faqPage(config.faqs)} />
 
       <Hero />
-      <div className="mx-auto max-w-page px-4 sm:px-6">
-        <article className="max-w-3xl pt-16">{content}</article>
-      </div>
+
+      <section className="mx-auto max-w-page px-4 py-16 sm:px-6 md:py-24">
+        <Reveal>
+          <div className="grid gap-10 md:grid-cols-2 md:gap-16">
+            <div>
+              <Eyebrow>TITAN HOME EXTERIORS</Eyebrow>
+              <h2 className="mt-4 font-heading text-3xl font-bold text-primary-dark md:text-5xl">
+                New windows and doors, installed by the people who <Em>answer the phone.</Em>
+              </h2>
+            </div>
+            <article className="max-w-xl">{content}</article>
+          </div>
+        </Reveal>
+      </section>
+
+      <ServiceCards />
+      <ProcessStepper />
+      <WhyTitan />
       <BeforeAfter />
-      <ServiceGrid />
+      <ServiceAreaSection />
       <PromoBand />
       <Gallery />
       <Reviews />
-      <AreaList />
       <FaqAccordion faqs={config.faqs} />
+      <TitanPromise />
       <CtaBand />
     </>
   )

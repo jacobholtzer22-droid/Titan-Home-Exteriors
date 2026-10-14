@@ -130,6 +130,50 @@ export const siteConfigSchema = z
       )
       .min(1),
 
+    /**
+     * Product pages: the specific window, door and siding types the client
+     * sells, mirroring the slugs the old site already ranks for. Same shape as
+     * a service plus the category it belongs to, the service page it supports,
+     * and the "what's included" feature blocks (facts, so they live here and
+     * not in prose).
+     *
+     * A product is a Service in schema terms, never a Product with offers: the
+     * client sells installation, not boxed goods, and emitting Product/Offer
+     * without a price is both untrue and a rich-result error.
+     */
+    products: z
+      .array(
+        z.object({
+          slug,
+          name: z.string().min(2),
+          category: z.enum(['windows', 'sliding-glass-doors', 'entry-doors', 'siding']),
+          /** Slug of the service page this product sits under. */
+          relatedService: slug,
+          shortDescription: z.string().min(40).max(200),
+          priceFrom: z.number().nullable(),
+          priceNote: z.string().nullable(),
+          image: z.string().nullable(),
+          features: z.array(z.object({ title: z.string().min(3), detail: z.string().min(20) })).min(3).max(4),
+          faqs: z.array(faq).min(3).max(5),
+        }),
+      )
+      .default([]),
+
+    /**
+     * The stages of a job, in order, as the client describes them. Facts, so
+     * they live here: components/ProcessStepper.tsx renders them and types
+     * none of them.
+     */
+    process: z
+      .array(
+        z.object({
+          name: z.string().min(3),
+          detail: z.string().min(30),
+          checklist: z.array(z.string().min(5)).min(2).max(4),
+        }),
+      )
+      .default([]),
+
     /** null means hours are unknown. openingHoursSpecification is omitted entirely. Never guess hours. */
     hours: z
       .array(
@@ -345,6 +389,9 @@ export type SiteConfigInput = z.input<typeof siteConfigSchema>
 export type SiteConfigParsed = z.output<typeof siteConfigSchema>
 
 export type Service = SiteConfigParsed['services'][number]
+export type Product = SiteConfigParsed['products'][number]
+export type Coverage = SiteConfigParsed['coverage'][number]
+export type ProcessStage = SiteConfigParsed['process'][number]
 export type ServiceArea = SiteConfigParsed['serviceAreas'][number]
 export type Review = SiteConfigParsed['reviews'][number]
 export type Faq = SiteConfigParsed['faqs'][number]

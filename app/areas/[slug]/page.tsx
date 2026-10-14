@@ -5,9 +5,10 @@ import BeforeAfter from '@/components/BeforeAfter'
 import CoverageList from '@/components/CoverageList'
 import CtaBand from '@/components/CtaBand'
 import JsonLd from '@/components/JsonLd'
-import PageHeader from '@/components/PageHeader'
+import PageHero from '@/components/PageHero'
 import ServiceGrid from '@/components/ServiceGrid'
-import { config, getArea } from '@/lib/config'
+import Link from 'next/link'
+import { config, countySlug, getArea } from '@/lib/config'
 import { loadContent, readFrontmatter } from '@/lib/content'
 import { breadcrumbList, localBusiness } from '@/lib/schema'
 import { buildMetadata } from '@/lib/seo'
@@ -42,14 +43,33 @@ export default async function AreaPage({ params }: { params: { slug: string } })
       <JsonLd data={localBusiness([area])} />
       <JsonLd data={breadcrumbList(crumbs)} />
 
-      <PageHeader
+      <PageHero
+        eyebrow={`SERVICE AREA · ${area.name.toUpperCase()}`}
         title={`${config.primaryService.name} in ${area.name}, ${config.primaryState}`}
+        emphasis={area.name}
         intro={area.county ? `Serving ${area.name} and the rest of ${area.county}.` : undefined}
         crumbs={crumbs}
+        secondary={{ href: '/areas', label: 'All service areas' }}
       />
       <div className="mx-auto max-w-page px-4 sm:px-6">
         <article className="max-w-3xl pt-10">{content}</article>
       </div>
+      {area.county && (
+        <section className="mx-auto max-w-page px-4 pb-4 sm:px-6">
+          <p className="text-sm text-muted">
+            {area.name} sits in{' '}
+            <Link href={`/counties/${countySlug(area.county)}`} className="font-medium text-accent hover:underline">
+              {area.county}
+            </Link>
+            . See every town we install in there, or browse{' '}
+            <Link href="/areas" className="font-medium text-accent hover:underline">
+              all of our service areas
+            </Link>
+            .
+          </p>
+        </section>
+      )}
+
       <BeforeAfter heading="Recent window and door work" />
       <ServiceGrid heading={`Services in ${area.name}`} />
       <AreaList heading="Nearby Areas" exclude={area.slug} />

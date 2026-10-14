@@ -4,7 +4,7 @@ import { compileMDX } from 'next-mdx-remote/rsc'
 import type { ReactElement } from 'react'
 import { mdxComponents } from '@/components/mdx-components'
 import { config } from './config'
-import type { Service, ServiceArea } from './config-schema'
+import type { Coverage, Product, Service, ServiceArea } from './config-schema'
 
 export const CONTENT_DIR = path.join(process.cwd(), 'content')
 
@@ -48,7 +48,7 @@ export function readFrontmatter(relPath: string): Frontmatter {
  */
 export async function loadContent(
   relPath: string,
-  scope: { service?: Service; area?: ServiceArea } = {},
+  scope: { service?: Service; area?: ServiceArea; product?: Product; county?: Coverage } = {},
 ): Promise<LoadedContent> {
   const file = path.join(CONTENT_DIR, relPath)
   if (!fs.existsSync(file)) {

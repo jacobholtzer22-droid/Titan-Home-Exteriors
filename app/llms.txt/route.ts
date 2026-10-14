@@ -1,4 +1,4 @@
-import { config, formatTime } from '@/lib/config'
+import { config, countySlug, formatTime } from '@/lib/config'
 
 export const dynamic = 'force-static'
 
@@ -23,8 +23,14 @@ export function GET() {
     '## Services',
     ...c.services.map((s) => `- [${s.name}](${url(`/services/${s.slug}`)}): ${s.shortDescription}`),
     '',
+    '## Products',
+    ...c.products.map((p) => `- [${p.name}](${url(`/products/${p.slug}`)}): ${p.shortDescription}`),
+    '',
     '## Service areas',
     ...c.serviceAreas.map((a) => `- [${a.name}, ${c.primaryState}](${url(`/areas/${a.slug}`)})`),
+    '',
+    '## Counties served',
+    ...c.coverage.map((x) => `- [${x.county}](${url(`/counties/${countySlug(x.county)}`)})`),
   ]
   if (c.hours) {
     lines.push('', '## Hours', ...c.hours.map((h) => `- ${h.day}: ${formatTime(h.open)} to ${formatTime(h.close)}`))
@@ -34,7 +40,20 @@ export function GET() {
   if (c.insured === true) facts.push('- Insured: yes')
   if (c.licenseNumber) facts.push(`- License: ${c.licenseNumber}`)
   if (facts.length) lines.push('', '## Credentials', ...facts)
-  lines.push('', '## Pages', `- [About](${url('/about')})`, `- [Privacy Policy](${url('/privacy-policy')})`, `- [Sitemap](${url('/sitemap.xml')})`)
+  lines.push(
+    '',
+    '## Pages',
+    `- [Services](${url('/services')})`,
+    `- [Products](${url('/products')})`,
+    `- [Service areas](${url('/areas')})`,
+    `- [Counties](${url('/counties')})`,
+    `- [Warranty](${url('/warranty')})`,
+    `- [Financing](${url('/financing')})`,
+    `- [FAQs](${url('/faq')})`,
+    `- [About](${url('/about')})`,
+    `- [Privacy Policy](${url('/privacy-policy')})`,
+    `- [Sitemap](${url('/sitemap.xml')})`,
+  )
 
   return new Response(lines.join('\n') + '\n', {
     headers: { 'Content-Type': 'text/plain; charset=utf-8' },

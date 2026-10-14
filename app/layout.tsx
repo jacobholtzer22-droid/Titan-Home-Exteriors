@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import type { CSSProperties, ReactNode } from 'react'
+import FloatingCta from '@/components/FloatingCta'
 import Footer from '@/components/Footer'
 import Header from '@/components/Header'
 import MobileCallBar from '@/components/MobileCallBar'
@@ -53,6 +54,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         </main>
         <Footer />
         <MobileCallBar />
+        <FloatingCta />
       </body>
     </html>
   )

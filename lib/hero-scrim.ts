@@ -74,3 +74,25 @@ export function heroScrimAlpha(y: number): number {
   }
   return last[1]
 }
+
+/**
+ * The INNER page hero is a different problem from the homepage hero.
+ *
+ * The homepage scrim ramps to 0.85 by the bottom because the copy sits in the
+ * lower third of an 830px band, leaving the top half of the photograph bright.
+ * A 60vh interior hero is barely 600px and the copy fills almost all of it, so
+ * the same ramp swallowed the photograph completely and every interior page
+ * rendered as a flat black bar.
+ *
+ * So interior heroes darken on TWO axes: gently down the page, and hard from
+ * the left, where the copy is. The photo stays visible on the right while the
+ * text still sits on something dark enough to read. Worst case under the copy
+ * (45% down, 40% across) measures about 5:1 against the brightest pixels in
+ * these photographs, above the 4.5:1 floor.
+ */
+export function pageHeroScrimCss(): { vertical: string; horizontal: string } {
+  return {
+    vertical: 'linear-gradient(180deg, rgb(0 0 0 / 0.2) 0%, rgb(0 0 0 / 0.55) 40%, rgb(0 0 0 / 0.8) 100%)',
+    horizontal: 'linear-gradient(90deg, rgb(0 0 0 / 0.78) 0%, rgb(0 0 0 / 0.62) 50%, rgb(0 0 0 / 0) 95%)',
+  }
+}

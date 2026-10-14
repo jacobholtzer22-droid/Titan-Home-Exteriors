@@ -3,7 +3,7 @@ import ContactDetails from '@/components/ContactDetails'
 import ContactForm from '@/components/ContactForm'
 import JsonLd from '@/components/JsonLd'
 import CoverageList from '@/components/CoverageList'
-import PageHeader from '@/components/PageHeader'
+import PageHero from '@/components/PageHero'
 import PromoBand from '@/components/PromoBand'
 import { config } from '@/lib/config'
 import { loadContent, readFrontmatter } from '@/lib/content'
@@ -26,7 +26,15 @@ export default async function ContactPage() {
   return (
     <>
       <JsonLd data={breadcrumbList(CRUMBS)} />
-      <PageHeader title={`Contact ${config.displayName}`} crumbs={CRUMBS} />
+      <PageHero
+        eyebrow="CONTACT"
+        title={`Request a free in-home estimate in ${config.primaryCity}`}
+        emphasis="free"
+        intro="Tell us how many windows or doors you are looking at and the ZIP of the property."
+        crumbs={CRUMBS}
+        primary={{ href: '#contact-form', label: 'Jump to the form' }}
+        secondary={{ href: '/faq', label: 'Read the FAQs' }}
+      />
       <PromoBand href="#contact-form" />
       <div className="mx-auto grid max-w-page gap-10 px-4 pt-10 sm:px-6 lg:grid-cols-3">
         <div className="lg:col-span-2">

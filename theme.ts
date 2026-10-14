@@ -70,9 +70,9 @@ const theme: Theme = {
     onPrimary: '#F4F6F9',
     onAccent: '#F7FAFF',
   },
-  // 'split': the strongest photo is a 768px-wide portrait and the rest were
-  // shot off a monitor. A full bleed would enlarge their flaws.
-  heroVariant: 'split',
+  // 'full-bleed': see the hero decision in the redesign report. The three
+  // widest photos crossfade behind the scrim; the first is images.hero.
+  heroVariant: 'full-bleed',
   radius: 0.25,
   shadow: '0 1px 2px rgb(8 10 13 / 0.10)',
   logo: null,

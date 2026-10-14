@@ -3,7 +3,7 @@ import Credentials from '@/components/Credentials'
 import CtaBand from '@/components/CtaBand'
 import Img from '@/components/Img'
 import JsonLd from '@/components/JsonLd'
-import PageHeader from '@/components/PageHeader'
+import PageHero from '@/components/PageHero'
 import { config } from '@/lib/config'
 import { loadContent, readFrontmatter } from '@/lib/content'
 import { breadcrumbList } from '@/lib/schema'
@@ -25,7 +25,15 @@ export default async function AboutPage() {
   return (
     <>
       <JsonLd data={breadcrumbList(CRUMBS)} />
-      <PageHeader title={`About ${config.displayName}`} intro={config.tagline} crumbs={CRUMBS} />
+      <PageHero
+        eyebrow="ABOUT"
+        title={`The crew behind ${config.displayName}`}
+        emphasis="crew"
+        intro={config.tagline}
+        image={config.images.about}
+        crumbs={CRUMBS}
+        secondary={{ href: '/warranty', label: 'See the warranty' }}
+      />
       <div className="mx-auto grid max-w-page gap-10 px-4 pt-10 sm:px-6 lg:grid-cols-3">
         <article className="lg:col-span-2">
           <Credentials />

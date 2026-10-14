@@ -28,3 +28,38 @@
     display: none;
   }
 }
+
+/* Motion. Every animated thing on the site is opacity/transform only, and all
+   of it is switched off here for visitors who ask for reduced motion. The
+   Reveal component also checks the same query in JS so elements start visible
+   rather than waiting on an observer that will never fire a transition. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+@keyframes heroScrollPulse {
+  0%, 100% { transform: scaleX(0.35); opacity: 0.5; }
+  50% { transform: scaleX(1); opacity: 1; }
+}
+
+@layer utilities {
+  .hero-scroll-line {
+    transform-origin: left center;
+    animation: heroScrollPulse 2.4s ease-in-out infinite;
+  }
+
+  /* Anchor targets sit clear of the floating nav. */
+  .anchor-offset {
+    scroll-margin-top: 7rem;
+  }
+}

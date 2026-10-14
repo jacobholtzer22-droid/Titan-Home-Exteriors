@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import JsonLd from '@/components/JsonLd'
-import PageHeader from '@/components/PageHeader'
+import PageHero from '@/components/PageHero'
 import Phone from '@/components/Phone'
 import { config } from '@/lib/config'
 import { contentExists, loadContent, readFrontmatter } from '@/lib/content'
@@ -47,7 +47,13 @@ export default async function PrivacyPolicyPage() {
   return (
     <>
       <JsonLd data={breadcrumbList(CRUMBS)} />
-      <PageHeader title="Privacy Policy" crumbs={CRUMBS} />
+      <PageHero
+        eyebrow="LEGAL"
+        title="Privacy Policy"
+        intro="What this site collects, how it is used, and how to reach us about it."
+        crumbs={CRUMBS}
+        secondary={{ href: '/contact', label: 'Contact us' }}
+      />
       <article className="prose-custom mx-auto max-w-3xl px-4 pt-6 text-base leading-relaxed text-ink sm:px-6">
         {extra?.content}
 

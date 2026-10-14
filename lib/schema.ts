@@ -1,5 +1,5 @@
 import { config } from './config'
-import type { Faq, Service, ServiceArea, SiteConfig } from './config-schema'
+import type { Faq, Product, Service, ServiceArea, SiteConfig } from './config-schema'
 import { getImage, hasImage } from './images'
 
 /**
@@ -66,9 +66,12 @@ function aggregateRating(c: SiteConfig): Json {
 
 /**
  * The business itself, typed as config.schemaType. Pass `areas` to scope
- * areaServed to one service area (used on area pages).
+ * areaServed to one service area (used on area pages), or `county` to scope it
+ * to one county (used on county pages). A county is an AdministrativeArea, not
+ * a City: typing "Hillsborough County" as a City is the kind of small lie that
+ * makes the rest of the markup less trustworthy.
  */
-export function localBusiness(areas: readonly ServiceArea[] = config.serviceAreas): Json {
+export function localBusiness(areas: readonly ServiceArea[] = config.serviceAreas, county?: string): Json {
   const c = config
   const image = heroImageUrl(c)
   return {
@@ -103,7 +106,7 @@ export function localBusiness(areas: readonly ServiceArea[] = config.serviceArea
         closes: h.close,
       })),
     })),
-    areaServed: areaServed(areas),
+    areaServed: county ? [{ '@type': 'AdministrativeArea', name: county }] : areaServed(areas),
     ...whenNonEmpty(sameAs(c), (urls) => ({ sameAs: urls })),
     ...when(c.yearsInBusiness, (years) => ({ foundingDate: String(new Date().getFullYear() - years) })),
     ...aggregateRating(c),
@@ -169,6 +172,33 @@ export function service(s: Service): Json {
         ...when(s.priceNote, (note) => ({ description: `From $${price} ${note}` })),
       },
     })),
+  }
+}
+
+/**
+ * A product page's schema. Deliberately a Service, not a Product: the client
+ * sells installation, and a Product without an offer is both untrue and a
+ * rich-result error.
+ */
+export function productService(p: Product): Json {
+  const c = config
+  const img = p.image && hasImage(p.image) ? absolute(getImage(p.image).src) : null
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Service',
+    '@id': `${absolute(`/products/${p.slug}`)}#service`,
+    name: p.name,
+    serviceType: p.name,
+    description: p.shortDescription,
+    url: absolute(`/products/${p.slug}`),
+    provider: { '@id': BUSINESS_ID() },
+    areaServed: areaServed(c.serviceAreas),
+    ...when(img, (image) => ({ image })),
+    isRelatedTo: {
+      '@type': 'Service',
+      name: c.services.find((x) => x.slug === p.relatedService)?.name ?? p.name,
+      url: absolute(`/services/${p.relatedService}`),
+    },
   }
 }
 

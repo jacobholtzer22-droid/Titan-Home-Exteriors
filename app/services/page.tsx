@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import CtaBand from '@/components/CtaBand'
 import JsonLd from '@/components/JsonLd'
-import PageHeader from '@/components/PageHeader'
+import PageHero from '@/components/PageHero'
 import ServiceGrid from '@/components/ServiceGrid'
 import { config } from '@/lib/config'
 import { loadContent, readFrontmatter } from '@/lib/content'
@@ -24,8 +24,17 @@ export default async function ServicesIndexPage() {
   return (
     <>
       <JsonLd data={breadcrumbList(CRUMBS)} />
-      <PageHeader title={`Services in ${config.primaryCity}, ${config.primaryState}`} crumbs={CRUMBS} />
-      <article className="mx-auto max-w-3xl px-4 pt-6 sm:px-6">{content}</article>
+      <PageHero
+        eyebrow="SERVICES"
+        title={`Window and Door Services in ${config.primaryCity}`}
+        emphasis="Services"
+        intro="Four services, one crew, with the county permit pulled and the inspection booked on every job."
+        crumbs={CRUMBS}
+        secondary={{ href: '/products', label: 'Browse products' }}
+      />
+      <div className="mx-auto max-w-page px-4 sm:px-6">
+        <article className="max-w-3xl pt-14">{content}</article>
+      </div>
       <ServiceGrid heading="Everything We Offer" />
       <CtaBand />
     </>

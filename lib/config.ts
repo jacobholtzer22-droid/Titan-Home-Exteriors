@@ -2,7 +2,7 @@ import rawConfig from '@/site.config'
 import { deriveConfig, siteConfigSchema, type SiteConfig } from './config-schema'
 
 export { CONTACT_ENDPOINT, HONEYPOT_FIELD } from './config-schema'
-export type { Faq, Review, Service, ServiceArea, SiteConfig } from './config-schema'
+export type { Coverage, Faq, Product, Review, Service, ServiceArea, SiteConfig } from './config-schema'
 
 function parseOrThrow(): SiteConfig {
   const result = siteConfigSchema.safeParse(rawConfig)
@@ -25,6 +25,29 @@ export function getService(slug: string) {
 
 export function getArea(slug: string) {
   return config.serviceAreas.find((a) => a.slug === slug) ?? null
+}
+
+export function getProduct(slug: string) {
+  return config.products.find((p) => p.slug === slug) ?? null
+}
+
+/** "Hillsborough County" -> "hillsborough". The county page slug. */
+export function countySlug(county: string): string {
+  return county
+    .replace(/\s*County$/i, '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+}
+
+export function getCounty(slug: string) {
+  return config.coverage.find((c) => countySlug(c.county) === slug) ?? null
+}
+
+/** The county a service-area town sits in, or null. */
+export function countyForArea(areaCounty: string | null) {
+  if (!areaCounty) return null
+  return config.coverage.find((c) => c.county === areaCounty) ?? null
 }
 
 /** Minutes-since-midnight "HH:MM" -> "8:00 AM". */

@@ -4,9 +4,11 @@ import CtaBand from '@/components/CtaBand'
 import FaqAccordion from '@/components/FaqAccordion'
 import Img from '@/components/Img'
 import JsonLd from '@/components/JsonLd'
-import PageHeader from '@/components/PageHeader'
+import PageHero from '@/components/PageHero'
 import PromoBand from '@/components/PromoBand'
+import Reveal from '@/components/Reveal'
 import ServiceGrid from '@/components/ServiceGrid'
+import Link from 'next/link'
 import { config, getService } from '@/lib/config'
 import { loadContent, readFrontmatter } from '@/lib/content'
 import { breadcrumbList, faqPage, service as serviceSchema } from '@/lib/schema'
@@ -44,6 +46,7 @@ export default async function ServicePage({ params }: { params: { slug: string }
   if (!service) notFound()
   const { content } = await loadContent(`services/${service.slug}.mdx`, { service })
   const crumbs = crumbsFor(service.name, service.slug)
+  const products = config.products.filter((p) => p.relatedService === service.slug)
 
   return (
     <>
@@ -51,7 +54,15 @@ export default async function ServicePage({ params }: { params: { slug: string }
       <JsonLd data={faqPage(service.faqs)} />
       <JsonLd data={breadcrumbList(crumbs)} />
 
-      <PageHeader title={`${service.name} in ${config.primaryCity}`} intro={service.shortDescription} crumbs={crumbs} />
+      <PageHero
+        eyebrow={`SERVICES · ${service.name.toUpperCase()}`}
+        title={`${service.name} in ${config.primaryCity}`}
+        emphasis={service.name.split(' ').slice(-1)[0]}
+        intro={service.shortDescription}
+        image={service.image}
+        crumbs={crumbs}
+        secondary={{ href: '/products', label: 'Browse products' }}
+      />
 
       <div className="mx-auto grid max-w-page gap-10 px-4 pt-10 sm:px-6 lg:grid-cols-3">
         <article className="lg:col-span-2">{content}</article>
@@ -76,6 +87,33 @@ export default async function ServicePage({ params }: { params: { slug: string }
           )}
         </aside>
       </div>
+
+      {products.length > 0 && (
+        <section className="mx-auto max-w-page px-4 py-16 sm:px-6">
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <h2 className="font-heading text-2xl font-bold text-primary-dark md:text-4xl">
+              {service.name} products
+            </h2>
+            <Link href="/products" className="text-sm font-semibold text-accent hover:underline">
+              View all products &rarr;
+            </Link>
+          </div>
+          <Reveal className="mt-8">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {products.map((p) => (
+                <Link
+                  key={p.slug}
+                  href={`/products/${p.slug}`}
+                  className="rounded-site border border-line bg-surface p-6 transition-colors hover:border-accent"
+                >
+                  <h3 className="font-heading text-lg font-bold text-primary-dark">{p.name}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-muted">{p.shortDescription}</p>
+                </Link>
+              ))}
+            </div>
+          </Reveal>
+        </section>
+      )}
 
       <PromoBand />
       <FaqAccordion faqs={service.faqs} heading={`${service.name} Questions`} />

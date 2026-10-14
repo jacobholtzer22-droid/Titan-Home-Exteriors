@@ -52,6 +52,19 @@ export default function Footer() {
         </div>
 
         <div>
+          <p className="text-sm font-semibold uppercase tracking-wide opacity-70">Company</p>
+          <ul className="mt-3 space-y-2 text-sm">
+            <li><Link href="/products" className="hover:underline">Products</Link></li>
+            <li><Link href="/areas" className="hover:underline">Service Areas</Link></li>
+            <li><Link href="/counties" className="hover:underline">Counties</Link></li>
+            <li><Link href="/warranty" className="hover:underline">Warranty</Link></li>
+            <li><Link href="/financing" className="hover:underline">Financing</Link></li>
+            <li><Link href="/faq" className="hover:underline">FAQs</Link></li>
+            <li><Link href="/about" className="hover:underline">About</Link></li>
+          </ul>
+        </div>
+
+        <div>
           <p className="text-sm font-semibold uppercase tracking-wide opacity-70">Service Areas</p>
           <ul className="mt-3 space-y-2 text-sm">
             {config.serviceAreas.map((a) => (
