@@ -366,6 +366,41 @@ export const siteConfigSchema = z
      */
     prelaunch: z.boolean().default(false),
 
+    /**
+     * Google tag. OPTIONAL: omit the block and nothing renders, so a site
+     * without it is byte-identical to before it existed.
+     *
+     * With googleAdsId set, every page loads gtag.js and configs that id (and
+     * ga4 when set). conversions.form fires when the contact form shows its
+     * thank-you; conversions.call fires on a click of any tel: link. Each
+     * label is the "send_to" value Google Ads gives for the conversion
+     * action: the same AW- id, a slash, then the label. A missing label means
+     * that conversion is not fired. The ops platform writes this block
+     * (install_tracking); verify check 22 measures the built HTML against it.
+     */
+    tracking: z
+      .object({
+        googleAdsId: z.string().regex(/^AW-\d{6,12}$/, 'must look like AW-1234567890').optional(),
+        conversions: z
+          .object({
+            form: z.string().regex(/^AW-\d{6,12}\/[\w-]+$/, 'must look like AW-1234567890/AbCdEfGh').optional(),
+            call: z.string().regex(/^AW-\d{6,12}\/[\w-]+$/, 'must look like AW-1234567890/AbCdEfGh').optional(),
+          })
+          .strict()
+          .default({}),
+        ga4: z.string().regex(/^G-[A-Z0-9]{4,14}$/, 'must look like G-ABC123DEF4').optional(),
+      })
+      .strict()
+      .superRefine((t, ctx) => {
+        for (const key of ['form', 'call'] as const) {
+          const label = t.conversions[key]
+          if (!label) continue
+          if (!t.googleAdsId) ctx.addIssue({ code: 'custom', path: ['conversions', key], message: 'needs tracking.googleAdsId' })
+          else if (!label.startsWith(`${t.googleAdsId}/`)) ctx.addIssue({ code: 'custom', path: ['conversions', key], message: `must start with ${t.googleAdsId}/` })
+        }
+      })
+      .optional(),
+
     /** Full origin including https:// and www. when www is the primary host. No trailing slash. */
     domain: z
       .string()
