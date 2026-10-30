@@ -1139,6 +1139,15 @@ const siteConfig = {
     finePrint: null,
   },
 
+  // Google tag. Labels from the Google Ads account's conversion actions. No
+  // call label yet, so tel: clicks are not counted as conversions.
+  tracking: {
+    googleAdsId: 'AW-18525819656',
+    conversions: {
+      form: 'AW-18525819656/-huJCOPXla8dEIim5oFF',
+    },
+  },
+
   // flip to false at launch, then redeploy
   prelaunch: true,
 

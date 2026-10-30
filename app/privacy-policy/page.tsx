@@ -85,10 +85,18 @@ export default async function PrivacyPolicyPage() {
         </p>
 
         <h2 className="mt-10 font-heading text-2xl font-bold text-primary-dark">Cookies and analytics</h2>
-        <p className="mt-4">
-          This site does not set tracking cookies of its own. If analytics or advertising tags are added in the future, this
-          policy will be updated to describe them.
-        </p>
+        {config.tracking?.googleAdsId ? (
+          <p className="mt-4">
+            This site uses the Google tag from Google Ads to measure whether a visit from one of our ads leads to a call or a
+            form submission. Google may set cookies in your browser to do this, under Google&apos;s own privacy policy. You can
+            block or clear cookies in your browser settings, and manage ad personalization in your Google account.
+          </p>
+        ) : (
+          <p className="mt-4">
+            This site does not set tracking cookies of its own. If analytics or advertising tags are added in the future, this
+            policy will be updated to describe them.
+          </p>
+        )}
 
         <h2 className="mt-10 font-heading text-2xl font-bold text-primary-dark">Your choices</h2>
         <p className="mt-4">

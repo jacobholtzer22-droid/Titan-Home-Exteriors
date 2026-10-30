@@ -549,6 +549,37 @@ async function run() {
     }
   }
 
+  // 22. The Google tag is on every page, and the form label on the contact page.
+  //
+  // Only when config.tracking.googleAdsId is set: a site without the block
+  // records no check 22, so the check count is unchanged. The ads platform counts form
+  // and call conversions from this tag; a tag that silently fell out of the
+  // build reads as zero conversions and the campaign is judged on calls alone.
+  // The tag script and its label travel in the page's RSC payload as escaped
+  // text, so the built HTML is searched as text, not as parsed script tags.
+  {
+    const t = cfg?.tracking
+    if (t?.googleAdsId) {
+      const problems: string[] = []
+      const loader = `googletagmanager.com/gtag/js?id=${t.googleAdsId}`
+      const missing = pages.filter((p) => !p.html.includes(loader)).map((p) => p.route)
+      if (missing.length) problems.push(`no gtag loader for ${t.googleAdsId} on ${missing.slice(0, 8).join(', ')}${missing.length > 8 ? ` and ${missing.length - 8} more` : ''}`)
+      if (t.conversions.form) {
+        const contact = pages.find((p) => p.route === '/contact')
+        if (!contact) problems.push('no /contact page to carry the form conversion')
+        else if (!contact.html.includes(t.conversions.form)) problems.push(`/contact does not carry the form conversion ${t.conversions.form}`)
+      }
+      record(
+        22,
+        'Google tag matches config.tracking',
+        problems.length === 0,
+        problems.length
+          ? problems.join('; ')
+          : `${t.googleAdsId} on ${pages.length} pages${t.conversions.form ? `; form ${t.conversions.form}` : ''}${t.conversions.call ? `; call ${t.conversions.call}` : ''}`,
+      )
+    }
+  }
+
   // ---------- report ----------
   results.sort((a, b) => a.id - b.id)
   const nameWidth = Math.max(...results.map((r) => r.name.length))
