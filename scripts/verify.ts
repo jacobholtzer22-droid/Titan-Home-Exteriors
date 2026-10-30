@@ -6,7 +6,6 @@ import rawConfig from '../site.config'
 import { CONTACT_ENDPOINT, HONEYPOT_FIELD, SCHEMA_TYPES, SLUG_REGEX, siteConfigSchema } from '../lib/config-schema'
 import { DESCRIPTION_MAX, DESCRIPTION_MIN, TITLE_MAX, TITLE_MIN } from './verify-limits'
 import { AA_RATIO, runContrastCheck } from './contrast-check'
-import { blankInterpolationProblems } from './verify-text-rules'
 
 /**
  * THE GATE. Runs after `next build` against the static output in ./out and
@@ -25,7 +24,25 @@ const CONTENT = path.join(ROOT, 'content')
 const CONFIG_FILE = path.join(ROOT, 'site.config.ts')
 const FORM_FILE = path.join(ROOT, 'components/ContactForm.tsx')
 const FORM_BASELINE = path.join(ROOT, 'scripts/contact-form.sha256')
+const SCHEMA_FILE = path.join(ROOT, 'lib/config-schema.ts')
 const VERIFY_SLUG_URL = 'https://www.alignandacquire.com/api/verify-slug'
+
+/**
+ * The two values the platform contract depends on, written out literally here
+ * so check 20 compares against a constant this file owns rather than against
+ * the import it is trying to police. Changing either one is a platform change,
+ * not a per-client change. See check 20.
+ *
+ * Typed `string`, not inferred as a literal, on purpose. The imports from
+ * lib/config-schema.ts are `as const`, so comparing two literal types that
+ * differ is a TYPE error ("no overlap") and `next build` dies on this file
+ * before the gate can run. That turns a readable check-20 failure row into a
+ * tsc stack trace in the middle of a CI log, which is the opposite of what the
+ * gate is for. Widening to `string` keeps the comparison a runtime check that
+ * reports itself properly.
+ */
+const SEALED_CONTACT_ENDPOINT: string = 'https://www.alignandacquire.com/api/contact'
+const SEALED_HONEYPOT_FIELD: string = 'hp_7d3a_ref'
 
 /** Identity markers of the shipped sample config. Any of these in the identity fields means the template is unfilled. */
 const SAMPLE_MARKERS = ['sample', 'example', 'template', 'EXAMPLE_']
@@ -214,6 +231,14 @@ async function run() {
   }
 
   // 3. Slug exists on the platform.
+  //
+  // The endpoint answers {"ok":true} at 200 and {"ok":false} at 404, so a 404
+  // now means the slug is genuinely not a Business row. It did not always: the
+  // route shipped after this check did, and until it existed a 404 was the
+  // platform's HTML not-found page, indistinguishable from an unknown slug.
+  // The body shape is what tells those two apart, so it is read rather than
+  // assumed — if the route is ever removed or broken, this must not report a
+  // real slug as missing.
   {
     let pass = false
     let detail = ''
@@ -222,11 +247,22 @@ async function run() {
         signal: AbortSignal.timeout(10_000),
         headers: { accept: 'application/json' },
       })
+      const body = await res.text()
+      let answered: { ok?: unknown } | null = null
+      try {
+        answered = JSON.parse(body) as { ok?: unknown }
+      } catch {
+        answered = null
+      }
+      const spoke = answered !== null && typeof answered.ok === 'boolean'
+
       if (res.status === 200) {
         pass = true
         detail = `platform confirmed slug "${slug}"`
+      } else if (res.status === 404 && spoke) {
+        detail = `the slug "${slug}" is not a Business row on the platform. Every lead this site sends would be dropped. Fix the slug in site.config.ts, or create the Business row, before deploying.`
       } else if (res.status === 404) {
-        detail = `GET ${VERIFY_SLUG_URL} returned 404. Either the slug "${slug}" is not a Business row on the platform, or the verify-slug endpoint does not exist yet (the platform must expose it). Do not deploy until this is a 200.`
+        detail = `GET ${VERIFY_SLUG_URL} returned 404 with no JSON body, so the verify-slug route itself is missing or broken — this is a platform problem, not a wrong slug. Confirm "${slug}" against Business.slug by hand before deploying.`
       } else {
         detail = `GET ${VERIFY_SLUG_URL}?slug=${slug} returned ${res.status}`
       }
@@ -479,8 +515,9 @@ async function run() {
   // raw HTML: React separates adjacent text nodes with <!-- -->, so a raw-HTML
   // grep sees "Care<!-- --> handles" and misreads healthy output as blank.
   //
-  // The signals are structural, not tied to any site's copy; they live in
-  // scripts/verify-text-rules.ts so they can be tested against strings.
+  // The signals are structural, not tied to any site's copy: a missing word
+  // leaves a double space, punctuation with nothing before it, or a function
+  // word with nothing after it.
   {
     const problems: string[] = []
 
@@ -496,6 +533,19 @@ async function run() {
       problems.push('could not read node_modules/next-mdx-remote/package.json')
     }
 
+    // Words that can end a clause in real English ("fill in,", "stop by.",
+    // "want to.", "what we're known for") are kept OUT of the punctuation rule
+    // and "for" out of the trailing rule, or healthy copy trips the gate.
+    const NEVER_BEFORE_PUNCT = '(?:the|a|an|of|near|across|around|throughout|serving)'
+    const NEVER_AT_END = '(?:in|at|by|from|of|with|near|around|across|the|a|an|and|or)'
+    const RULES: { name: string; re: RegExp; trimmed?: boolean }[] = [
+      { name: 'double space inside text (empty value between two words)', re: /\S {2,}\S/ },
+      { name: 'space before punctuation ("in , IL")', re: /\S\s+[,.;:?!]/ },
+      { name: 'function word followed by punctuation ("the .")', re: new RegExp(`\\b${NEVER_BEFORE_PUNCT}\\s*[,.;:]`, 'i') },
+      { name: 'text ends with a function word ("Lawn care in")', re: new RegExp(`\\b${NEVER_AT_END}$`, 'i'), trimmed: true },
+      { name: 'text starts with punctuation (", IL")', re: /^[,.;:]/, trimmed: true },
+      { name: 'consecutive punctuation (", ,")', re: /[,;:]\s*[,.;:]/ },
+    ]
     const TEXT_ELEMENTS = 'title, h1, h2, h3, h4, h5, h6, p, li, dt, dd, summary, figcaption, td, th, blockquote, address'
 
     const seen = new Set<string>()
@@ -509,11 +559,15 @@ async function run() {
       })
       for (const raw of texts) {
         const trimmed = raw.trim()
-        for (const name of blankInterpolationProblems(raw)) {
-          const key = `${p.route}|${name}|${trimmed.slice(0, 60)}`
+        if (!trimmed) continue
+        for (const rule of RULES) {
+          const subject = rule.trimmed ? trimmed : raw
+          const m = subject.match(rule.re)
+          if (!m) continue
+          const key = `${p.route}|${rule.name}|${trimmed.slice(0, 60)}`
           if (seen.has(key)) continue
           seen.add(key)
-          problems.push(`${p.route}: ${name} near "${trimmed.slice(0, 70)}"`)
+          problems.push(`${p.route}: ${rule.name} near "${trimmed.slice(0, 70)}"`)
         }
       }
     }
@@ -546,6 +600,157 @@ async function run() {
       } catch (err) {
         record(19, `text over the hero photo meets WCAG AA (${AA_RATIO}:1)`, false, err instanceof Error ? err.message : String(err))
       }
+    }
+  }
+
+  // 20. The two platform constants are still the sealed values.
+  //
+  // Checks 5 and 6 assert against CONTACT_ENDPOINT and HONEYPOT_FIELD imported
+  // from lib/config-schema.ts — the same module components/ContactForm.tsx
+  // reads. Editing a constant there therefore moves BOTH sides of those
+  // comparisons at once: point CONTACT_ENDPOINT at another host and check 5
+  // happily confirms the built HTML matches it. The form itself is sealed by
+  // checksum (check 4), but config-schema.ts is not, and cannot be: it
+  // legitimately changes whenever the contactForm block grows. So this check
+  // pins the only two values in it that the platform contract depends on.
+  //
+  // It reads the SOURCE TEXT, not just the imported binding, because an import
+  // can be satisfied by a re-export or a computed value while the declaration
+  // that ships says something else. Both are compared, against literals this
+  // file owns (SEALED_* above).
+  //
+  // Failing this is never a client-site fix. Either the platform contract
+  // changed — in which case the template repo updates the constant, the form,
+  // scripts/contact-form.sha256 and this check together — or a lead-stealing
+  // edit was just caught.
+  {
+    const problems: string[] = []
+
+    let schemaSrc = ''
+    try {
+      schemaSrc = fs.readFileSync(SCHEMA_FILE, 'utf8')
+    } catch (err) {
+      problems.push(`could not read lib/config-schema.ts: ${err instanceof Error ? err.message : String(err)}`)
+    }
+
+    const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    const declared = (name: string, value: string) =>
+      new RegExp(`export const ${name}\\s*=\\s*(['"\`])${escape(value)}\\1`).test(schemaSrc)
+
+    if (schemaSrc) {
+      if (!declared('CONTACT_ENDPOINT', SEALED_CONTACT_ENDPOINT)) {
+        problems.push(`lib/config-schema.ts no longer declares CONTACT_ENDPOINT = "${SEALED_CONTACT_ENDPOINT}"`)
+      }
+      if (!declared('HONEYPOT_FIELD', SEALED_HONEYPOT_FIELD)) {
+        problems.push(`lib/config-schema.ts no longer declares HONEYPOT_FIELD = "${SEALED_HONEYPOT_FIELD}"`)
+      }
+    }
+    // The imported bindings must agree with the source text, or checks 5 and 6
+    // are measuring something the repo does not declare.
+    if (CONTACT_ENDPOINT !== SEALED_CONTACT_ENDPOINT) {
+      problems.push(`imported CONTACT_ENDPOINT is "${CONTACT_ENDPOINT}", expected "${SEALED_CONTACT_ENDPOINT}"`)
+    }
+    if (HONEYPOT_FIELD !== SEALED_HONEYPOT_FIELD) {
+      problems.push(`imported HONEYPOT_FIELD is "${HONEYPOT_FIELD}", expected "${SEALED_HONEYPOT_FIELD}"`)
+    }
+
+    record(
+      20,
+      'lib/config-schema.ts still declares the sealed endpoint and honeypot',
+      problems.length === 0,
+      problems.length ? problems.join('; ') : `${SEALED_CONTACT_ENDPOINT} / ${SEALED_HONEYPOT_FIELD}`,
+    )
+  }
+
+  // 21. The rendered robots directives match config.launch.indexable.
+  //
+  // The flag is the difference between "the client can look at this" and "Google
+  // has indexed this", and both failure directions cost real money: a launched
+  // site still carrying noindex earns nothing and nobody notices for weeks,
+  // while an unapproved site that is indexable publishes copy the client never
+  // signed off on and leaves it in the index after the fix.
+  //
+  // Measured on the BUILT HTML, not on the config, because the config is the
+  // input and the tag is the artifact. app/layout.tsx declares robots once and
+  // every route inherits it, so one page disagreeing with the others means a
+  // page set its own metadata and silently opted out.
+  {
+    const indexable = cfg ? cfg.launch.indexable : null
+    if (indexable === null) {
+      record(21, 'robots directives match launch.indexable', false, 'config did not parse; nothing to compare against')
+    } else {
+      const problems: string[] = []
+
+      for (const p of pages) {
+        const content = (p.$('meta[name="robots"]').attr('content') ?? '').trim().toLowerCase()
+        if (indexable) {
+          // Launched: no robots meta at all. "index, follow" is the default and
+          // a tag that says so is one more thing that can rot.
+          if (content) problems.push(`${p.route}: launch.indexable is true but robots meta is "${content}"`)
+        } else {
+          if (!content) {
+            problems.push(`${p.route}: launch.indexable is false but there is no robots meta`)
+          } else if (!content.includes('noindex') || !content.includes('nofollow')) {
+            problems.push(`${p.route}: launch.indexable is false but robots meta is "${content}", expected noindex, nofollow`)
+          }
+        }
+      }
+
+      // robots.txt has to agree. A noindex page served beside a robots.txt that
+      // invites crawlers in is an inconsistency nobody can act on.
+      const robotsFile = path.join(OUT, 'robots.txt')
+      if (!fs.existsSync(robotsFile)) {
+        problems.push('out/robots.txt missing')
+      } else {
+        const txt = fs.readFileSync(robotsFile, 'utf8')
+        const disallowsAll = /^\s*disallow:\s*\/\s*$/im.test(txt)
+        const hasSitemap = /^\s*sitemap:/im.test(txt)
+        if (indexable) {
+          if (disallowsAll) problems.push('launch.indexable is true but robots.txt still has a blanket "Disallow: /"')
+          if (!hasSitemap) problems.push('launch.indexable is true but robots.txt has no Sitemap line')
+        } else {
+          if (!disallowsAll) problems.push('launch.indexable is false but robots.txt has no blanket "Disallow: /"')
+          if (hasSitemap) problems.push('launch.indexable is false but robots.txt still advertises a Sitemap')
+        }
+      }
+
+      record(
+        21,
+        'robots directives match launch.indexable',
+        problems.length === 0,
+        problems.length ? problems.slice(0, 8).join('; ') : `launch.indexable is ${indexable}; ${pages.length} pages agree, robots.txt agrees`,
+      )
+    }
+  }
+
+  // 22. The Google tag is on every page, and the form label on the contact page.
+  //
+  // Only when config.tracking.googleAdsId is set: a site without the block
+  // records no check 22, so it stays at 21/21. The ads platform counts form
+  // and call conversions from this tag; a tag that silently fell out of the
+  // build reads as zero conversions and the campaign is judged on calls alone.
+  // The tag script and its label travel in the page's RSC payload as escaped
+  // text, so the built HTML is searched as text, not as parsed script tags.
+  {
+    const t = cfg?.tracking
+    if (t?.googleAdsId) {
+      const problems: string[] = []
+      const loader = `googletagmanager.com/gtag/js?id=${t.googleAdsId}`
+      const missing = pages.filter((p) => !p.html.includes(loader)).map((p) => p.route)
+      if (missing.length) problems.push(`no gtag loader for ${t.googleAdsId} on ${missing.slice(0, 8).join(', ')}${missing.length > 8 ? ` and ${missing.length - 8} more` : ''}`)
+      if (t.conversions.form) {
+        const contact = pages.find((p) => p.route === '/contact')
+        if (!contact) problems.push('no /contact page to carry the form conversion')
+        else if (!contact.html.includes(t.conversions.form)) problems.push(`/contact does not carry the form conversion ${t.conversions.form}`)
+      }
+      record(
+        22,
+        'Google tag matches config.tracking',
+        problems.length === 0,
+        problems.length
+          ? problems.join('; ')
+          : `${t.googleAdsId} on ${pages.length} pages${t.conversions.form ? `; form ${t.conversions.form}` : ''}${t.conversions.call ? `; call ${t.conversions.call}` : ''}`,
+      )
     }
   }
 
