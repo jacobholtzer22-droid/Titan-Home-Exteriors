@@ -100,21 +100,6 @@ export const siteConfigSchema = z
       )
       .min(1),
 
-    /**
-     * Every town the business will actually drive to, grouped by county.
-     * Rendered as plain text, never as links: the serviceAreas array above is
-     * what gets a page each, and a hundred linked town names is a doorway-page
-     * pattern. Empty by default, in which case nothing renders.
-     */
-    coverage: z
-      .array(
-        z.object({
-          county: z.string().min(3),
-          towns: z.array(z.string().min(2)).min(1),
-        }),
-      )
-      .default([]),
-
     services: z
       .array(
         z.object({
@@ -129,50 +114,6 @@ export const siteConfigSchema = z
         }),
       )
       .min(1),
-
-    /**
-     * Product pages: the specific window, door and siding types the client
-     * sells, mirroring the slugs the old site already ranks for. Same shape as
-     * a service plus the category it belongs to, the service page it supports,
-     * and the "what's included" feature blocks (facts, so they live here and
-     * not in prose).
-     *
-     * A product is a Service in schema terms, never a Product with offers: the
-     * client sells installation, not boxed goods, and emitting Product/Offer
-     * without a price is both untrue and a rich-result error.
-     */
-    products: z
-      .array(
-        z.object({
-          slug,
-          name: z.string().min(2),
-          category: z.enum(['windows', 'sliding-glass-doors', 'entry-doors', 'siding']),
-          /** Slug of the service page this product sits under. */
-          relatedService: slug,
-          shortDescription: z.string().min(40).max(200),
-          priceFrom: z.number().nullable(),
-          priceNote: z.string().nullable(),
-          image: z.string().nullable(),
-          features: z.array(z.object({ title: z.string().min(3), detail: z.string().min(20) })).min(3).max(4),
-          faqs: z.array(faq).min(3).max(5),
-        }),
-      )
-      .default([]),
-
-    /**
-     * The stages of a job, in order, as the client describes them. Facts, so
-     * they live here: components/ProcessStepper.tsx renders them and types
-     * none of them.
-     */
-    process: z
-      .array(
-        z.object({
-          name: z.string().min(3),
-          detail: z.string().min(30),
-          checklist: z.array(z.string().min(5)).min(2).max(4),
-        }),
-      )
-      .default([]),
 
     /** null means hours are unknown. openingHoursSpecification is omitted entirely. Never guess hours. */
     hours: z
@@ -223,32 +164,6 @@ export const siteConfigSchema = z
       hero: z.string().nullable(),
       about: z.string().nullable(),
       gallery: z.array(z.string()).default([]),
-      /**
-       * Before and after pairs, by manifest filename, with a caption that says
-       * what changed. Both files must be in the manifest. Empty by default;
-       * components/BeforeAfter.tsx renders nothing then.
-       */
-      beforeAfter: z
-        .array(
-          z.object({
-            before: z.string(),
-            after: z.string(),
-            caption: z.string().min(10),
-          }),
-        )
-        .default([]),
-      /**
-       * Optional full-bleed hero footage, paths under /public.
-       *
-       * There is no poster field on purpose: `hero` above IS the poster. It
-       * is already processed, already preloaded by <Img priority>, already
-       * the LCP element, and already what verify check 19 measures the hero
-       * copy against. A separate poster would be a second source of truth
-       * for the frame a visitor actually reads the H1 over.
-       *
-       * Requires `hero` to be set; the refine below enforces it.
-       */
-      heroVideo: z.object({ desktop: z.string().min(2), mobile: z.string().min(2) }).nullable().default(null),
     }),
 
     /**
@@ -342,29 +257,63 @@ export const siteConfigSchema = z
       .optional(),
 
     /**
-     * One standing promotion, or null. The ONLY place a dollar figure is
-     * allowed to be authored: content files are scanned for bare prices
-     * (verify check 7), so the number lives here and reaches the page through
-     * components/PromoBand.tsx. null renders no band at all.
+     * Pre-launch switch. `indexable: false` is the shipped default and the only
+     * value a build may produce.
      *
-     * finePrint is null until the client supplies real terms. Never invent them.
+     * False: every page carries `<meta name="robots" content="noindex,
+     * nofollow">` and robots.txt is a blanket disallow. The site is fully
+     * reachable — it can be merged, deployed, and sent to the client to look at
+     * — it is simply not in anyone's index. That is what makes merging a
+     * finished-but-unapproved site to main safe.
+     *
+     * True: no robots meta at all, and a normal robots.txt with the sitemap
+     * line. Only a human flips this, through a `go_live` run. An agent that
+     * sets it true has published a site nobody approved, so AGENT.md forbids it
+     * and verify check 21 measures the rendered HTML against it either way.
+     *
+     * No default on purpose. A missing `launch` block is a loud Zod failure,
+     * not a silent fallback: an existing client repo pulling this change must
+     * say which state it is in, because defaulting it either way would either
+     * de-index a live site or publish an unapproved one.
      */
-    offer: z
-      .object({
-        headline: z.string().min(8),
-        detail: z.string().min(20),
-        finePrint: z.string().nullable(),
-      })
-      .nullable(),
+    launch: z.object({
+      indexable: z.boolean(),
+    }),
 
     /**
-     * true while the site is parked on a Vercel URL before the domain cutover:
-     * every page is noindex, nofollow and robots.txt disallows everything, so
-     * the staging host can never be indexed under the client's name.
+     * Google tag. OPTIONAL: omit the block and nothing renders, so a site
+     * without it is byte-identical to before it existed.
      *
-     * flip to false at launch, then redeploy
+     * With googleAdsId set, every page loads gtag.js and configs that id (and
+     * ga4 when set). conversions.form fires when the contact form shows its
+     * thank-you; conversions.call fires on a click of any tel: link. Each
+     * label is the "send_to" value Google Ads gives for the conversion
+     * action: the same AW- id, a slash, then the label. A missing label means
+     * that conversion is not fired. The ops platform writes this block
+     * (install_tracking); verify check 22 measures the built HTML against it.
      */
-    prelaunch: z.boolean().default(false),
+    tracking: z
+      .object({
+        googleAdsId: z.string().regex(/^AW-\d{6,12}$/, 'must look like AW-1234567890').optional(),
+        conversions: z
+          .object({
+            form: z.string().regex(/^AW-\d{6,12}\/[\w-]+$/, 'must look like AW-1234567890/AbCdEfGh').optional(),
+            call: z.string().regex(/^AW-\d{6,12}\/[\w-]+$/, 'must look like AW-1234567890/AbCdEfGh').optional(),
+          })
+          .strict()
+          .default({}),
+        ga4: z.string().regex(/^G-[A-Z0-9]{4,14}$/, 'must look like G-ABC123DEF4').optional(),
+      })
+      .strict()
+      .superRefine((t, ctx) => {
+        for (const key of ['form', 'call'] as const) {
+          const label = t.conversions[key]
+          if (!label) continue
+          if (!t.googleAdsId) ctx.addIssue({ code: 'custom', path: ['conversions', key], message: 'needs tracking.googleAdsId' })
+          else if (!label.startsWith(`${t.googleAdsId}/`)) ctx.addIssue({ code: 'custom', path: ['conversions', key], message: `must start with ${t.googleAdsId}/` })
+        }
+      })
+      .optional(),
 
     /** Full origin including https:// and www. when www is the primary host. No trailing slash. */
     domain: z
@@ -373,25 +322,11 @@ export const siteConfigSchema = z
       .regex(/^https:\/\/[^/]+$/, 'origin only: https://www.example-host.com with no path or trailing slash'),
   })
   .strict()
-  .superRefine((cfg, ctx) => {
-    // Footage with no poster would leave the hero blank until the clip
-    // decodes, and would leave check 19 with nothing to measure.
-    if (cfg.images.heroVideo && !cfg.images.hero) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['images', 'heroVideo'],
-        message: 'images.hero must be set when images.heroVideo is: the hero image is the video poster and the LCP element',
-      })
-    }
-  })
 
 export type SiteConfigInput = z.input<typeof siteConfigSchema>
 export type SiteConfigParsed = z.output<typeof siteConfigSchema>
 
 export type Service = SiteConfigParsed['services'][number]
-export type Product = SiteConfigParsed['products'][number]
-export type Coverage = SiteConfigParsed['coverage'][number]
-export type ProcessStage = SiteConfigParsed['process'][number]
 export type ServiceArea = SiteConfigParsed['serviceAreas'][number]
 export type Review = SiteConfigParsed['reviews'][number]
 export type Faq = SiteConfigParsed['faqs'][number]
